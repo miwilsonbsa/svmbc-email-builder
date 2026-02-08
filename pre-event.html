@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SVMBC Pre-Event Email Builder</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>*{margin:0;padding:0;box-sizing:border-box;}</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState } = React;
+
+/* ── BSA Brand Colors (from 310-0231.pdf) ── */
+const BSA = {
+  blue: "#003F87",
+  red: "#CE1126",
+  tan: "#D6CEBD",
+  warmGray: "#515354",
+  darkGray: "#232528",
+  lightTan: "#E9E9E4",
+  paleBlue: "#9AB3D5",
+  darkBlue: "#003366",
+  darkTan: "#AD9D7B",
+  paleGray: "#858787",
+  white: "#FFFFFF",
+  cubGold: "#FDC116",
+  olive: "#243E2C",
+  venturingGreen: "#006B3F",
+};
+
+const defaultData = {
+  eventName: "",
+  eventDates: "",
+  location: "",
+  greeting: "Hello Folks,",
+  welcomeMessage: "",
+  showDetails: true,
+  detailItems: [],
+  showPacking: false,
+  packingIntro: "Please ensure that each participant has all important items:",
+  packingItems: [],
+  showSchedule: false,
+  scheduleIntro: "Please review the schedule below. A full agenda is attached.",
+  scheduleItems: [],
+  showLinks: false,
+  linksIntro: "Please review the items below. If you have any questions, please send us a message!",
+  links: [],
+  customBlocks: [],
+  showRegistration: false,
+  registrationMessage: "Spots are filling up! Register now to secure your place at {eventName}.",
+  registrationLink: "",
+  registrationButtonText: "Register Now",
+  closingLine: "See you all soon!",
+  closingSignoff: "Yours in Scouting,",
+  senderName: "",
+  senderTitle: "",
+  senderEmail: "",
+  senderPhone: "",
+  sigLogoUrl: "https://svmbc.org/wp-content/uploads/2024/08/Colored-Horizontal-Logo-png.png",
+  sigShowLogo: true,
+  sigNewsletterLink: "https://svmbc.org/newsletter/",
+  sigFacebookLink: "https://www.facebook.com/SVMBC",
+  brandAccent: "blue",
+};
+
+const accentMap = {
+  blue: { primary: BSA.blue, cta: BSA.red, headerBg: BSA.blue, label: "BSA Corporate (Blue)" },
+  red: { primary: BSA.red, cta: BSA.blue, headerBg: BSA.red, label: "BSA Red Accent" },
+  cubGold: { primary: BSA.blue, cta: BSA.cubGold, headerBg: BSA.blue, label: "Cub Scouting (Gold)" },
+  olive: { primary: BSA.olive, cta: BSA.red, headerBg: BSA.olive, label: "Scouts BSA (Olive)" },
+  venturingGreen: { primary: BSA.venturingGreen, cta: BSA.cubGold, headerBg: BSA.venturingGreen, label: "Venturing (Green)" },
+};
+
+const campdocBlock = {
+  title: "📋 CampDoc Health Forms",
+  content: "BSA Annual Health and Medical Record Parts A and B are required for all participants. New in 2026, each participant will complete Parts A and B forms via CampDoc at least 2 weeks before your session. Enter all medications and document any allergies.\n\nAccess CampDoc: https://app.campdoc.com/!/dn/login\nCampDoc Help: CampDoc@svmbc.org",
+};
+
+const presets = {
+  blank: { label: "🆕 Blank", data: defaultData },
+  chsEvent: {
+    label: "⛺ CHS Event",
+    data: {
+      ...defaultData,
+      eventName: "Camp Hi-Sierra Week [X]",
+      eventDates: "June 21–27, 2026",
+      location: "Camp Hi-Sierra",
+      greeting: "Welcome to {eventName}!",
+      welcomeMessage: "We are thrilled to welcome your Troop to {location} for an unforgettable week of summer camp! Camp Hi-Sierra sits at 5,000 feet elevation in the Stanislaus National Forest near Long Barn, CA. Here is everything you need to know to prepare for your week.",
+      showDetails: true,
+      detailItems: [
+        { title: "Check In", content: "Sunday 1:00 PM – 2:00 PM at the Dining Hall. Staff will greet you and guide you to your campsite. Swim tests take place Sunday afternoon.", link: "", linkText: "" },
+        { title: "Driving Directions", content: "Camp Hi-Sierra is approximately 3.5–4 hours (180 miles) east of San Jose via Highway 108. The last town for supplies is Sonora (34 miles from camp). The final 2.5 miles is a single-lane dirt road: please observe the 15 MPH speed limit and yield to uphill traffic.", link: "", linkText: "" },
+        { title: "Parking & Departure", content: "Park in the main lot upon arrival. Vehicles remain there for the week. Departure is Saturday at 10:00 AM. Please back into spaces per Scouting rules.", link: "", linkText: "" },
+        { title: "Medical Forms & CampDoc", content: "BSA Annual Health and Medical Record Parts A, B, and C are required (originals only). Part C physical must be dated within 12 months of camp. Submit forms via CampDoc at least 2 weeks before your session. Enter all medications and document any allergies, especially those with anaphylaxis history.", link: "", linkText: "" },
+        { title: "What's Included", content: "All meals are provided from Sunday dinner through Saturday breakfast. Tent platforms are provided at each campsite (bring your own tents, no cots available). Firewood for campfires is provided.", link: "", linkText: "" },
+        { title: "Merit Badge Fees", content: "Most merit badges are included in tuition. Additional fees apply for: Archery ($15), Rifle Shooting ($40), Shotgun Shooting ($45), Metalwork ($20), Pottery ($25), and Sailing ($20). Fees are collected at camp.", link: "", linkText: "" },
+        { title: "Trading Post", content: "The Trading Post accepts cash and cards. Typical spending is $75–$100 for the week. Snacks, souvenirs, and camp gear are available.", link: "", linkText: "" },
+        { title: "Cell Service & WiFi", content: "Cell service is very limited at camp. WiFi is available for $15/week. Encourage Scouts to unplug and enjoy the outdoors!", link: "", linkText: "" },
+        { title: "Camp Contacts", content: "Camp phone (daylight hours): (209) 965-3432. Emergency after-hours: (209) 965-4029. Email: chs@svmbc.org. Camp Director Bruce Lee: (408) 307-3383. Nearest hospital: Sonora Regional Medical Center (34 miles).", link: "", linkText: "" },
+      ],
+      showPacking: true,
+      packingIntro: "Each Scout should bring the following. Days can reach 90°F and nights can drop to 40°F, so layers are essential.",
+      packingItems: ["Sleeping bag and sleeping pad (no cots at camp)", "Scout uniform (Class A)", "Warm layers for cold nights", "Lightweight clothes for hot days", "Rain gear", "Broken-in hiking boots", "Sunscreen and insect repellent", "Water bottle (refillable)", "Flashlight or headlamp", "Toiletries and towel", "Day pack", "Completed merit badge prerequisites"],
+      showSchedule: false,
+      showLinks: true,
+      linksIntro: "Use these resources to prepare for your week at camp:",
+      links: [
+        { url: "https://app.campdoc.com/!/dn/login", label: "CampDoc Medical Portal" },
+        { url: "http://camphi-sierra.org/chs/", label: "Camp Hi-Sierra Info Page" },
+        { url: "", label: "Merit Badge Schedule (coming soon)" },
+        { url: "", label: "What to Bring Checklist" },
+      ],
+      customBlocks: [{ ...campdocBlock }],
+      showRegistration: false,
+      closingLine: "We can't wait to welcome your Troop to the mountain!",
+      closingSignoff: "Yours in Scouting,",
+      brandAccent: "olive",
+    },
+  },
+  csrEvent: {
+    label: "🏢 CSR Event",
+    data: {
+      ...defaultData,
+      eventName: "District Roundtable",
+      eventDates: "{eventDates}",
+      location: "Chesebrough Scout Reservation",
+      greeting: "Hello Folks,",
+      welcomeMessage: "Thank you for registering for {eventName}! We look forward to seeing you at the {location}. Here are the details you need to know before the event.",
+      showDetails: true,
+      detailItems: [
+        { title: "Check In", content: "Please arrive 10–15 minutes early for sign-in. Check in at the front desk upon arrival.", link: "", linkText: "" },
+        { title: "Location & Parking", content: "Chesebrough Scout Reservation, 26005 Big Basin Wy, Los Gatos, CA 95033. Free parking is available on site.", link: "https://svmbc.org/chesebrough-scout-reservation/", linkText: "Chesebrough Info" },
+        { title: "What to Bring", content: "Please bring a pen/pencil for notes. Any pre-work or materials referenced in your registration confirmation should be completed prior to the event.", link: "", linkText: "" },
+        { title: "Contact Information", content: "Council office: (408) 638-8300. Email: info@svmbc.org. For questions about this specific event, reply to this email.", link: "", linkText: "" },
+      ],
+      showPacking: false,
+      showSchedule: false,
+      showLinks: false,
+      customBlocks: [{ ...campdocBlock }],
+      showRegistration: false,
+      closingLine: "See you there!",
+      closingSignoff: "Yours in Scouting,",
+      brandAccent: "blue",
+    },
+  },
+  dayEvent: {
+    label: "🎭 Day Event",
+    data: {
+      ...defaultData,
+      eventName: "OARS (Outdoor Adventure Roleplay Scenario)",
+      eventDates: "Saturday, March 15th",
+      location: "Camp Hi-Sierra",
+      greeting: "Get Ready for {eventName}!",
+      welcomeMessage: "We are so excited to have you join us for {eventName} at {location}! This is going to be an incredible day of adventure and fun. Here is everything you need to know before you arrive.",
+      showDetails: true,
+      detailItems: [
+        { title: "Check In", content: "8:00 AM – 9:00 AM at the main gate. The event kicks off promptly at 9:00 AM.", link: "", linkText: "" },
+        { title: "Parking", content: "Follow the signs to the designated parking area. Please back into spaces per Scouting rules.", link: "", linkText: "" },
+        { title: "What to Expect", content: "A full day of outdoor adventure scenarios. Wear comfortable clothing appropriate for the weather and sturdy shoes.", link: "", linkText: "" },
+      ],
+      showPacking: true,
+      packingIntro: "Please make sure each participant brings:",
+      packingItems: ["Water bottle", "Day pack", "Sunscreen", "Hat", "Comfortable shoes", "Snacks (lunch provided)"],
+      showSchedule: false,
+      showLinks: false,
+      customBlocks: [{ ...campdocBlock }],
+      showRegistration: false,
+      closingLine: "We can't wait to see you there!",
+      closingSignoff: "Yours in Scouting,",
+      brandAccent: "blue",
+    },
+  },
+  training: {
+    label: "📋 Training",
+    data: {
+      ...defaultData,
+      eventName: "IOLS (Introduction to Outdoor Leader Skills)",
+      eventDates: "March 22-23, 2026",
+      location: "Camp Hi-Sierra",
+      greeting: "Welcome to {eventName}!",
+      welcomeMessage: "Thank you for signing up for {eventName}! This training will prepare you with essential outdoor leadership skills. Here is what you need to know before arriving at {location}.",
+      showDetails: true,
+      detailItems: [
+        { title: "Check In", content: "Saturday 7:30 AM at the Dining Hall. Training begins at 8:00 AM sharp.", link: "", linkText: "" },
+        { title: "What's Covered", content: "Outdoor cooking, knots and lashings, navigation, first aid scenarios, campfire building, Leave No Trace principles, and more.", link: "", linkText: "" },
+        { title: "Prerequisites", content: "Participants should have completed online modules for this course before attending. Check your my.scouting.org account.", link: "", linkText: "" },
+      ],
+      showPacking: true,
+      packingIntro: "Please bring the following to training:",
+      packingItems: ["Sleeping bag", "Personal mess kit", "Water bottle", "Notebook and pen", "Weather-appropriate clothing", "Pocket knife (if Totin' Chip earned)", "Flashlight/headlamp"],
+      showSchedule: false,
+      showLinks: false,
+      customBlocks: [{ ...campdocBlock }],
+      showRegistration: false,
+      closingLine: "Looking forward to a great training weekend!",
+      closingSignoff: "Yours in Scouting,",
+      brandAccent: "olive",
+    },
+  },
+};
+
+/* ── UI Components ── */
+const SectionLabel = ({ children }) => (
+  <div style={{ fontFamily: "'Trebuchet MS', Arial, sans-serif", fontSize: "11px", letterSpacing: "1.5px", textTransform: "uppercase", color: BSA.blue, marginBottom: "6px", fontWeight: "bold" }}>{children}</div>
+);
+
+const Input = ({ value, onChange, placeholder, multiline, style: s }) => {
+  const base = {
+    width: "100%", padding: "10px 12px", border: `1.5px solid ${BSA.tan}`, borderRadius: "4px",
+    fontFamily: "Arial, Helvetica, sans-serif", fontSize: "13px", color: BSA.darkGray, background: BSA.white,
+    outline: "none", transition: "border-color 0.2s", boxSizing: "border-box", ...s,
+  };
+  if (multiline) return <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={3} style={{ ...base, resize: "vertical" }} onFocus={e => e.target.style.borderColor = BSA.blue} onBlur={e => e.target.style.borderColor = BSA.tan} />;
+  return <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={base} onFocus={e => e.target.style.borderColor = BSA.blue} onBlur={e => e.target.style.borderColor = BSA.tan} />;
+};
+
+const Toggle = ({ checked, onChange, label }) => (
+  <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "13px", fontFamily: "Arial, sans-serif", color: BSA.darkGray }}>
+    <div onClick={() => onChange(!checked)} style={{ width: "40px", height: "22px", borderRadius: "11px", background: checked ? BSA.blue : BSA.tan, position: "relative", transition: "background 0.25s", flexShrink: 0 }}>
+      <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "#fff", position: "absolute", top: "2px", left: checked ? "20px" : "2px", transition: "left 0.25s", boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }} />
+    </div>
+    {label}
+  </label>
+);
+
+const Btn = ({ children, onClick, variant = "primary", style: s }) => {
+  const styles = {
+    primary: { background: BSA.blue, color: "#fff" },
+    red: { background: BSA.red, color: "#fff" },
+    success: { background: BSA.blue, color: "#fff" },
+    ghost: { background: "none", color: BSA.blue, border: `1.5px dashed ${BSA.tan}` },
+    danger: { background: "none", color: BSA.red, border: `1px solid #ecc` },
+  };
+  return <button onClick={onClick} style={{ padding: "8px 18px", border: "none", borderRadius: "4px", cursor: "pointer", fontFamily: "'Trebuchet MS', Arial, sans-serif", fontSize: "13px", fontWeight: "bold", transition: "opacity 0.2s", ...styles[variant], ...s }}>{children}</button>;
+};
+
+const Card = ({ children, style: s }) => (
+  <div style={{ background: "#fff", borderRadius: "6px", padding: "24px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", border: `1px solid ${BSA.lightTan}`, ...s }}>{children}</div>
+);
+
+const FieldLabel = ({ children }) => <div style={{ fontSize: "12px", color: BSA.warmGray, marginBottom: "4px", fontFamily: "Arial, sans-serif" }}>{children}</div>;
+
+/* ── Detail Item Card ── */
+const DetailItemCard = ({ item, index, onUpdate, onRemove, onMoveUp, onMoveDown, isFirst, isLast }) => (
+  <div style={{ background: BSA.lightTan, border: `1px solid ${BSA.tan}`, borderRadius: "4px", padding: "14px", marginBottom: "10px" }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+      <span style={{ fontFamily: "'Trebuchet MS', sans-serif", fontSize: "11px", color: BSA.blue, letterSpacing: "1px", fontWeight: "bold" }}>ITEM {index + 1}</span>
+      <div style={{ display: "flex", gap: "6px" }}>
+        {!isFirst && <button onClick={onMoveUp} style={{ background: "none", border: `1px solid ${BSA.tan}`, borderRadius: "3px", cursor: "pointer", fontSize: "11px", padding: "2px 6px", color: BSA.warmGray }}>↑</button>}
+        {!isLast && <button onClick={onMoveDown} style={{ background: "none", border: `1px solid ${BSA.tan}`, borderRadius: "3px", cursor: "pointer", fontSize: "11px", padding: "2px 6px", color: BSA.warmGray }}>↓</button>}
+        <Btn variant="danger" onClick={onRemove} style={{ padding: "2px 8px", fontSize: "12px" }}>Remove</Btn>
+      </div>
+    </div>
+    <div style={{ display: "grid", gap: "8px" }}>
+      <Input value={item.title} onChange={v => onUpdate({ ...item, title: v })} placeholder="Item title (e.g., Check In, Parking, Meals)" />
+      <Input value={item.content} onChange={v => onUpdate({ ...item, content: v })} placeholder="Details..." multiline />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+        <Input value={item.link || ""} onChange={v => onUpdate({ ...item, link: v })} placeholder="Link URL (optional)" />
+        <Input value={item.linkText || ""} onChange={v => onUpdate({ ...item, linkText: v })} placeholder="Link text (e.g., Join Zoom)" />
+      </div>
+    </div>
+  </div>
+);
+
+/* ── Custom Block Card ── */
+const CustomBlockCard = ({ block, index, onUpdate, onRemove, onMoveUp, onMoveDown, isFirst, isLast }) => {
+  const styleOpts = [
+    { value: "info", label: "ℹ️ Info (Blue)" }, { value: "warning", label: "⚠️ Alert (Gold)" },
+    { value: "success", label: "✅ Success (Green)" }, { value: "plain", label: "📝 Plain" },
+  ];
+  return (
+    <div style={{ background: BSA.lightTan, border: `1px solid ${BSA.tan}`, borderRadius: "4px", padding: "14px", marginBottom: "10px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+        <span style={{ fontFamily: "'Trebuchet MS', sans-serif", fontSize: "11px", color: BSA.blue, letterSpacing: "1px", fontWeight: "bold" }}>BLOCK {index + 1}</span>
+        <div style={{ display: "flex", gap: "6px" }}>
+          {!isFirst && <button onClick={onMoveUp} style={{ background: "none", border: `1px solid ${BSA.tan}`, borderRadius: "3px", cursor: "pointer", fontSize: "11px", padding: "2px 6px", color: BSA.warmGray }}>↑</button>}
+          {!isLast && <button onClick={onMoveDown} style={{ background: "none", border: `1px solid ${BSA.tan}`, borderRadius: "3px", cursor: "pointer", fontSize: "11px", padding: "2px 6px", color: BSA.warmGray }}>↓</button>}
+          <Btn variant="danger" onClick={onRemove} style={{ padding: "2px 8px", fontSize: "12px" }}>Remove</Btn>
+        </div>
+      </div>
+      <div style={{ display: "grid", gap: "8px" }}>
+        <Input value={block.title} onChange={v => onUpdate({ ...block, title: v })} placeholder="Block Title" />
+        <Input value={block.content} onChange={v => onUpdate({ ...block, content: v })} placeholder="Block content..." multiline />
+        <div>
+          <FieldLabel>Style</FieldLabel>
+          <select value={block.style || "info"} onChange={e => onUpdate({ ...block, style: e.target.value })} style={{ width: "100%", padding: "8px 12px", border: `1.5px solid ${BSA.tan}`, borderRadius: "4px", fontFamily: "Arial, sans-serif", fontSize: "13px", color: BSA.darkGray, background: "#fff", outline: "none" }}>
+            {styleOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const sectionDefs = [
+  { id: "welcome", label: "Welcome Message" },
+  { id: "details", label: "Event Details / Info Items" },
+  { id: "packing", label: "Packing List" },
+  { id: "schedule", label: "Schedule / Agenda" },
+  { id: "links", label: "Important Links" },
+  { id: "custom", label: "Custom Blocks" },
+  { id: "registration", label: "Registration CTA" },
+];
+
+/* ── HTML Generator ── */
+function generateHTML(data) {
+  const accent = accentMap[data.brandAccent] || accentMap.blue;
+  const resolve = t => (t || "").replace(/\{eventName\}/g, data.eventName).replace(/\{location\}/g, data.location).replace(/\{eventDates\}/g, data.eventDates);
+  const blockBorders = { info: accent.primary, warning: BSA.cubGold, success: BSA.olive, plain: "transparent" };
+
+  const sectionHTML = {
+    welcome: data.welcomeMessage ? `<tr><td style="padding:24px 40px 8px 40px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:${BSA.darkGray};line-height:1.7;">${resolve(data.welcomeMessage)}</p></td></tr>` : "",
+
+    details: data.showDetails && data.detailItems.length > 0 ? `<tr><td style="padding:20px 40px 8px;"><table cellpadding="0" cellspacing="0" border="0" width="100%">${data.detailItems.filter(d => d.title).map((d, i) => `<tr><td style="padding:0 0 14px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${accent.primary};border-radius:0 4px 4px 0;padding:16px 20px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td><p style="margin:0 0 2px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};"><span style="color:${accent.primary};font-weight:bold;">${i + 1}.</span> ${d.title}</p><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${resolve(d.content)}</p>${d.link ? `<p style="margin:8px 0 0;"><a href="${d.link}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:8px 18px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;">${d.linkText || "Learn More"}</a></p>` : ""}</td></tr></table></td></tr></table></td></tr>`).join("\n")}</table></td></tr>` : "",
+
+    packing: data.showPacking && data.packingItems.length > 0 ? `<tr><td style="padding:16px 40px 8px;"><h2 style="margin:0 0 8px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:18px;color:${accent.primary};font-weight:bold;">What to Bring</h2><p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.packingIntro)}</p><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-radius:4px;padding:16px 20px;">${data.packingItems.filter(p => p).map(p => `<p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.5;">&#9745; ${p}</p>`).join("\n")}</td></tr></table></td></tr>` : "",
+
+    schedule: data.showSchedule && data.scheduleItems.length > 0 ? `<tr><td style="padding:16px 40px 8px;"><h2 style="margin:0 0 8px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:18px;color:${accent.primary};font-weight:bold;">Schedule</h2><p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.scheduleIntro)}</p><table cellpadding="0" cellspacing="0" border="0" width="100%">${data.scheduleItems.filter(s => s.time || s.activity).map(s => `<tr><td style="padding:0 0 8px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:#fff;border:1px solid ${BSA.tan};border-radius:4px;padding:12px 16px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="width:120px;vertical-align:top;"><p style="margin:0;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;color:${accent.primary};">${s.time}</p></td><td style="vertical-align:top;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};">${s.activity}</p></td></tr></table></td></tr></table></td></tr>`).join("\n")}</table></td></tr>` : "",
+
+    links: data.showLinks && data.links.length > 0 ? `<tr><td style="padding:16px 40px 8px;"><h2 style="margin:0 0 8px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:18px;color:${accent.primary};font-weight:bold;">Important Links</h2><p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.linksIntro)}</p><table cellpadding="0" cellspacing="0" border="0" width="100%">${data.links.filter(l => l.label).map(l => `<tr><td style="padding:0 0 8px;"><a href="${l.url || "#"}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:10px 24px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">${l.label}</a></td></tr>`).join("\n")}</table></td></tr>` : "",
+
+    custom: data.customBlocks.length > 0 ? data.customBlocks.map(b => `<tr><td style="padding:8px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};border-radius:0 4px 4px 0;padding:16px 20px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${resolve(b.content)}</p></td></tr></table></td></tr>`).join("\n") : "",
+
+    registration: data.showRegistration ? `<tr><td style="padding:16px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${accent.primary};border-radius:4px;padding:24px;text-align:center;"><p style="margin:0 0 12px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:18px;color:#fff;font-weight:bold;">${resolve(data.registrationMessage)}</p>${data.registrationLink ? `<a href="${data.registrationLink}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:12px 32px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:14px;font-weight:bold;">${data.registrationButtonText || "Register Now"}</a>` : ""}</td></tr></table></td></tr>` : "",
+  };
+
+  const order = data.sectionOrder || sectionDefs.map(s => s.id);
+  const body = order.map(id => sectionHTML[id] || "").filter(Boolean).join("\n");
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:${BSA.lightTan};font-family:Arial,Helvetica,sans-serif;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${BSA.lightTan};">
+<tr><td align="center" style="padding:30px 16px;">
+<table cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;background:#fff;border-radius:0;overflow:hidden;">
+
+<!-- HEADER -->
+<tr><td style="background:${accent.headerBg};padding:0;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="padding:28px 40px 12px 40px;">
+<h1 style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;color:#fff;font-size:24px;font-weight:bold;">${resolve(data.greeting)}</h1>
+${data.eventDates ? `<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:16px;color:rgba(255,255,255,0.85);font-weight:bold;">${resolve(data.eventDates)}</p>` : ""}
+</td></tr>
+<tr><td style="padding:0;height:6px;background:${accent.cta};"></td></tr>
+</table>
+</td></tr>
+
+${body}
+
+<!-- CLOSING -->
+${data.closingLine ? `<tr><td style="padding:24px 40px 4px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.closingLine)}</p></td></tr>` : ""}
+${data.closingSignoff ? `<tr><td style="padding:8px 40px 4px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:${BSA.darkGray};font-style:italic;">${resolve(data.closingSignoff)}</p></td></tr>` : ""}
+
+${data.senderName ? `<!-- SIGNATURE -->
+<tr><td style="padding:8px 40px 24px;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:2px solid ${BSA.tan};padding-top:16px;">
+<p style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:14px;color:${BSA.darkGray};"><strong style="color:${BSA.blue};">${data.senderName}</strong>${data.senderTitle ? ` <span style="color:${BSA.warmGray};">|</span> <span style="color:${BSA.darkGray};">${data.senderTitle}</span>` : ""}</p>
+${data.senderPhone ? `<p style="margin:0 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${BSA.darkGray};">Phone: ${data.senderPhone}</p>` : ""}
+${data.senderEmail ? `<p style="margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:12px;"><a href="mailto:${data.senderEmail}" style="color:${BSA.blue};text-decoration:underline;">${data.senderEmail}</a></p>` : ""}
+${data.sigShowLogo && data.sigLogoUrl ? `<div style="margin:0 0 10px;"><img src="${data.sigLogoUrl}" alt="" width="280" style="display:block;width:280px;max-width:100%;height:auto;" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" /><div style="display:none;"><p style="margin:0 0 2px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;color:${BSA.blue};">Scouting America</p><p style="margin:0;font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;color:${BSA.red};">Silicon Valley Monterey Bay Council</p></div></div>` : `<p style="margin:0 0 2px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;color:${BSA.blue};">Scouting America</p><p style="margin:0 0 10px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;color:${BSA.red};">Silicon Valley Monterey Bay Council</p>`}
+<p style="margin:0 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${BSA.warmGray};line-height:1.5;">Council Service Center: 1900 The Alameda, Suite 100, San Jose, CA 95126</p>
+<p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${BSA.warmGray};line-height:1.5;">Monterey County Trading Post: 187 El Dorado Street, Unit F, Monterey, CA 93940</p>
+<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;">
+<a href="https://www.svmbc.org" style="color:${BSA.blue};text-decoration:underline;font-weight:bold;">www.svmbc.org</a>
+<span style="color:${BSA.warmGray};"> | </span>
+<a href="${data.sigNewsletterLink || 'https://svmbc.org/newsletter/'}" style="color:${BSA.blue};text-decoration:underline;">Subscribe to our Newsletter</a>
+<span style="color:${BSA.warmGray};"> | </span>
+<a href="${data.sigFacebookLink || 'https://www.facebook.com/SVMBC'}" style="color:${BSA.blue};text-decoration:underline;">Facebook</a>
+</p>
+</td></tr></table>
+</td></tr>` : ""}
+
+</table>
+</td></tr></table>
+</body></html>`;
+}
+
+/* ── Outlook Paste Generator ── */
+function generateOutlookHTML(data) {
+  const accent = accentMap[data.brandAccent] || accentMap.blue;
+  const resolve = t => (t || "").replace(/\{eventName\}/g, data.eventName).replace(/\{location\}/g, data.location).replace(/\{eventDates\}/g, data.eventDates);
+  const blockBorders = { info: accent.primary, warning: BSA.cubGold, success: BSA.olive, plain: "transparent" };
+  const parts = [];
+
+  parts.push(`<p style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:22px;font-weight:bold;color:${accent.headerBg};">${resolve(data.greeting)}</p>`);
+  if (data.eventDates) parts.push(`<p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:bold;color:${accent.primary};">${resolve(data.eventDates)}</p>`);
+  parts.push(`<hr style="border:none;height:4px;background:${accent.cta};margin:8px 0 20px;" />`);
+
+  const order = data.sectionOrder || sectionDefs.map(s => s.id);
+
+  order.forEach(id => {
+    if (id === "welcome" && data.welcomeMessage) {
+      parts.push(`<p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.7;">${resolve(data.welcomeMessage)}</p>`);
+    }
+    if (id === "details" && data.showDetails && data.detailItems.length > 0) {
+      data.detailItems.filter(d => d.title).forEach((d, i) => {
+        parts.push(`<div style="background:${BSA.lightTan};border-left:4px solid ${accent.primary};padding:14px 18px;margin:0 0 12px;"><p style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};"><span style="color:${accent.primary};font-weight:bold;">${i + 1}.</span> ${d.title}</p><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${resolve(d.content)}</p>${d.link ? `<p style="margin:8px 0 0;"><a href="${d.link}" style="color:${accent.cta};font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;">${d.linkText || "Learn More"} →</a></p>` : ""}</div>`);
+      });
+    }
+    if (id === "packing" && data.showPacking && data.packingItems.length > 0) {
+      parts.push(`<p style="margin:16px 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:17px;font-weight:bold;color:${accent.primary};">What to Bring</p>`);
+      parts.push(`<p style="margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.packingIntro)}</p>`);
+      parts.push(`<div style="background:${BSA.lightTan};padding:14px 18px;margin:0 0 16px;">${data.packingItems.filter(p => p).map(p => `<p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.5;">☑ ${p}</p>`).join("\n")}</div>`);
+    }
+    if (id === "schedule" && data.showSchedule && data.scheduleItems.length > 0) {
+      parts.push(`<p style="margin:16px 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:17px;font-weight:bold;color:${accent.primary};">Schedule</p>`);
+      parts.push(`<p style="margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.scheduleIntro)}</p>`);
+      data.scheduleItems.filter(s => s.time || s.activity).forEach(s => {
+        parts.push(`<div style="border:1px solid ${BSA.tan};padding:10px 14px;margin:0 0 8px;"><span style="font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;color:${accent.primary};">${s.time}</span> <span style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};">${s.activity}</span></div>`);
+      });
+    }
+    if (id === "links" && data.showLinks && data.links.length > 0) {
+      parts.push(`<p style="margin:16px 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:17px;font-weight:bold;color:${accent.primary};">Important Links</p>`);
+      parts.push(`<p style="margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.linksIntro)}</p>`);
+      data.links.filter(l => l.label).forEach(l => {
+        parts.push(`<p style="margin:0 0 8px;"><a href="${l.url || "#"}" style="color:${accent.cta};font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">${l.label} →</a></p>`);
+      });
+    }
+    if (id === "custom" && data.customBlocks.length > 0) {
+      data.customBlocks.forEach(b => {
+        parts.push(`<div style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};padding:14px 18px;margin:0 0 12px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${resolve(b.content)}</p></div>`);
+      });
+    }
+    if (id === "registration" && data.showRegistration) {
+      parts.push(`<div style="background:${accent.primary};padding:20px 24px;margin:12px 0 16px;text-align:center;"><p style="margin:0 0 10px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:17px;color:#fff;font-weight:bold;">${resolve(data.registrationMessage)}</p>${data.registrationLink ? `<p style="margin:0;"><a href="${data.registrationLink}" style="color:#fff;font-family:'Trebuchet MS',Arial,sans-serif;font-size:14px;font-weight:bold;background:${accent.cta};padding:10px 28px;text-decoration:none;">${data.registrationButtonText || "Register Now"}</a></p>` : ""}</div>`);
+    }
+  });
+
+  if (data.closingLine) parts.push(`<p style="margin:16px 0 4px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.closingLine)}</p>`);
+  if (data.closingSignoff) parts.push(`<p style="margin:4px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};font-style:italic;">${resolve(data.closingSignoff)}</p>`);
+
+  if (data.senderName) {
+    let sig = `<div style="border-top:2px solid ${BSA.tan};padding-top:14px;margin-top:8px;">`;
+    sig += `<p style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:14px;color:${BSA.darkGray};"><strong style="color:${BSA.blue};">${data.senderName}</strong>${data.senderTitle ? ` <span style="color:${BSA.warmGray};">|</span> <span>${data.senderTitle}</span>` : ""}</p>`;
+    if (data.senderPhone) sig += `<p style="margin:0 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${BSA.darkGray};">Phone: ${data.senderPhone}</p>`;
+    if (data.senderEmail) sig += `<p style="margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:12px;"><a href="mailto:${data.senderEmail}" style="color:${BSA.blue};text-decoration:underline;">${data.senderEmail}</a></p>`;
+    sig += `<p style="margin:0 0 2px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;color:${BSA.blue};">Scouting America</p>`;
+    sig += `<p style="margin:0 0 8px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;color:${BSA.red};">Silicon Valley Monterey Bay Council</p>`;
+    sig += `<p style="margin:0 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${BSA.warmGray};line-height:1.5;">Council Service Center: 1900 The Alameda, Suite 100, San Jose, CA 95126</p>`;
+    sig += `<p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${BSA.warmGray};line-height:1.5;">Monterey County Trading Post: 187 El Dorado Street, Unit F, Monterey, CA 93940</p>`;
+    sig += `<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;"><a href="https://www.svmbc.org" style="color:${BSA.blue};text-decoration:underline;font-weight:bold;">www.svmbc.org</a> <span style="color:${BSA.warmGray};">|</span> <a href="${data.sigNewsletterLink || 'https://svmbc.org/newsletter/'}" style="color:${BSA.blue};text-decoration:underline;">Subscribe to our Newsletter</a> <span style="color:${BSA.warmGray};">|</span> <a href="${data.sigFacebookLink || 'https://www.facebook.com/SVMBC'}" style="color:${BSA.blue};text-decoration:underline;">Facebook</a></p>`;
+    sig += `</div>`;
+    parts.push(sig);
+  }
+
+  return parts.join("\n");
+}
+
+/* ── Main App ── */
+function PreEventEmailBuilder() {
+  const [data, setData] = useState({ ...defaultData, sectionOrder: sectionDefs.map(s => s.id) });
+  const [activeTab, setActiveTab] = useState("edit");
+  const [copied, setCopied] = useState(false);
+  const [outlookCopied, setOutlookCopied] = useState(false);
+
+  const update = (key, val) => setData(d => ({ ...d, [key]: val }));
+  const loadPreset = key => { const p = presets[key].data; setData({ ...p, sectionOrder: p.sectionOrder || sectionDefs.map(s => s.id) }); };
+  const moveSection = (idx, dir) => { const o = [...(data.sectionOrder || sectionDefs.map(s => s.id))]; const s = idx + dir; if (s < 0 || s >= o.length) return; [o[idx], o[s]] = [o[s], o[idx]]; update("sectionOrder", o); };
+  const moveBlock = (idx, dir) => { const b = [...data.customBlocks]; const s = idx + dir; if (s < 0 || s >= b.length) return; [b[idx], b[s]] = [b[s], b[idx]]; update("customBlocks", b); };
+  const moveDetailItem = (idx, dir) => { const d = [...data.detailItems]; const s = idx + dir; if (s < 0 || s >= d.length) return; [d[idx], d[s]] = [d[s], d[idx]]; update("detailItems", d); };
+  const copyHTML = () => { navigator.clipboard.writeText(generateHTML(data)); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  const copyOutlook = () => {
+    const html = generateOutlookHTML(data);
+    const blob = new Blob([html], { type: "text/html" });
+    const plain = new Blob([html], { type: "text/plain" });
+    navigator.clipboard.write([new ClipboardItem({ "text/html": blob, "text/plain": plain })]).then(() => {
+      setOutlookCopied(true); setTimeout(() => setOutlookCopied(false), 2000);
+    });
+  };
+
+  const tabStyle = t => ({
+    padding: "10px 20px", border: "none",
+    borderBottom: activeTab === t ? `3px solid ${BSA.red}` : "3px solid transparent",
+    background: "none", fontFamily: "'Trebuchet MS', Arial, sans-serif", fontSize: "13px",
+    fontWeight: activeTab === t ? "bold" : "normal", color: activeTab === t ? BSA.blue : BSA.paleGray,
+    cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap",
+  });
+
+  const order = data.sectionOrder || sectionDefs.map(s => s.id);
+
+  const sectionEditors = {
+    welcome: (
+      <Card key="welcome">
+        <SectionLabel>Event & Welcome</SectionLabel>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+          <div><FieldLabel>Event Name</FieldLabel><Input value={data.eventName} onChange={v => update("eventName", v)} placeholder="e.g., Bearcub Paw" /></div>
+          <div><FieldLabel>Location</FieldLabel><Input value={data.location} onChange={v => update("location", v)} placeholder="e.g., Camp Hi-Sierra" /></div>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "12px", marginBottom: "12px" }}>
+          <div><FieldLabel>Event Dates</FieldLabel><Input value={data.eventDates} onChange={v => update("eventDates", v)} placeholder="e.g., February 6th – 8th" /></div>
+        </div>
+        <div style={{ marginBottom: "12px" }}><FieldLabel>Greeting / Header</FieldLabel><Input value={data.greeting} onChange={v => update("greeting", v)} placeholder="Welcome to Bearcub Paw!!" /></div>
+        <div><FieldLabel>Welcome Message · use {"{eventName}"}, {"{location}"}, {"{eventDates}"} as tokens</FieldLabel><Input value={data.welcomeMessage} onChange={v => update("welcomeMessage", v)} multiline placeholder="We look forward to an amazing experience..." /></div>
+      </Card>
+    ),
+    details: (
+      <Card key="details">
+        <SectionLabel>Event Details / Info Items</SectionLabel>
+        <Toggle checked={data.showDetails} onChange={v => update("showDetails", v)} label="Include numbered detail items" />
+        {data.showDetails && <div style={{ marginTop: "12px" }}>
+          <p style={{ fontSize: "12px", color: BSA.paleGray, margin: "0 0 12px", lineHeight: "1.5", fontFamily: "Arial, sans-serif" }}>Check-in, parking, meals, health forms, cabins — numbered items like your pre-event info sheet.</p>
+          {data.detailItems.map((item, i) => (
+            <DetailItemCard key={i} item={item} index={i}
+              onUpdate={d => { const items = [...data.detailItems]; items[i] = d; update("detailItems", items); }}
+              onRemove={() => update("detailItems", data.detailItems.filter((_, j) => j !== i))}
+              onMoveUp={() => moveDetailItem(i, -1)} onMoveDown={() => moveDetailItem(i, 1)}
+              isFirst={i === 0} isLast={i === data.detailItems.length - 1}
+            />
+          ))}
+          <Btn variant="ghost" onClick={() => update("detailItems", [...data.detailItems, { title: "", content: "", link: "", linkText: "" }])} style={{ width: "100%" }}>+ Add Detail Item</Btn>
+        </div>}
+      </Card>
+    ),
+    packing: (
+      <Card key="packing">
+        <SectionLabel>Packing List / What to Bring</SectionLabel>
+        <Toggle checked={data.showPacking} onChange={v => update("showPacking", v)} label="Include packing list" />
+        {data.showPacking && <div style={{ display: "grid", gap: "10px", marginTop: "12px" }}>
+          <div><FieldLabel>Introduction</FieldLabel><Input value={data.packingIntro} onChange={v => update("packingIntro", v)} multiline placeholder="Please ensure each participant has..." /></div>
+          <div>
+            <FieldLabel>Items (one per line)</FieldLabel>
+            <textarea
+              value={data.packingItems.join("\n")}
+              onChange={e => update("packingItems", e.target.value.split("\n"))}
+              placeholder={"Warm socks\nWinter hat\nSunscreen\n..."}
+              rows={6}
+              style={{ width: "100%", padding: "10px 12px", border: `1.5px solid ${BSA.tan}`, borderRadius: "4px", fontFamily: "Arial, Helvetica, sans-serif", fontSize: "13px", color: BSA.darkGray, background: BSA.white, outline: "none", resize: "vertical", boxSizing: "border-box" }}
+            />
+          </div>
+        </div>}
+      </Card>
+    ),
+    schedule: (
+      <Card key="schedule">
+        <SectionLabel>Schedule / Agenda</SectionLabel>
+        <Toggle checked={data.showSchedule} onChange={v => update("showSchedule", v)} label="Include schedule" />
+        {data.showSchedule && <div style={{ display: "grid", gap: "10px", marginTop: "12px" }}>
+          <div><FieldLabel>Introduction</FieldLabel><Input value={data.scheduleIntro} onChange={v => update("scheduleIntro", v)} multiline /></div>
+          {data.scheduleItems.map((s, i) => (
+            <div key={i} style={{ background: BSA.lightTan, borderRadius: "4px", padding: "12px", position: "relative" }}>
+              <button onClick={() => update("scheduleItems", data.scheduleItems.filter((_, j) => j !== i))} style={{ position: "absolute", top: "8px", right: "8px", background: "none", border: "none", cursor: "pointer", color: BSA.warmGray, fontSize: "16px" }} title="Remove">✕</button>
+              <div style={{ display: "grid", gridTemplateColumns: "140px 1fr", gap: "8px" }}>
+                <Input value={s.time} onChange={v => { const arr = [...data.scheduleItems]; arr[i] = { ...arr[i], time: v }; update("scheduleItems", arr); }} placeholder="Time (e.g. 8:00 AM)" />
+                <Input value={s.activity} onChange={v => { const arr = [...data.scheduleItems]; arr[i] = { ...arr[i], activity: v }; update("scheduleItems", arr); }} placeholder="Activity" />
+              </div>
+            </div>
+          ))}
+          <Btn variant="ghost" onClick={() => update("scheduleItems", [...data.scheduleItems, { time: "", activity: "" }])} style={{ width: "100%" }}>+ Add Schedule Item</Btn>
+        </div>}
+      </Card>
+    ),
+    links: (
+      <Card key="links">
+        <SectionLabel>Important Links</SectionLabel>
+        <Toggle checked={data.showLinks} onChange={v => update("showLinks", v)} label="Include links section" />
+        {data.showLinks && <div style={{ display: "grid", gap: "10px", marginTop: "12px" }}>
+          <div><FieldLabel>Introduction</FieldLabel><Input value={data.linksIntro} onChange={v => update("linksIntro", v)} multiline /></div>
+          {data.links.map((l, i) => (
+            <div key={i} style={{ background: BSA.lightTan, borderRadius: "4px", padding: "12px", position: "relative" }}>
+              <button onClick={() => update("links", data.links.filter((_, j) => j !== i))} style={{ position: "absolute", top: "8px", right: "8px", background: "none", border: "none", cursor: "pointer", color: BSA.warmGray, fontSize: "16px" }} title="Remove">✕</button>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <Input value={l.label} onChange={v => { const arr = [...data.links]; arr[i] = { ...arr[i], label: v }; update("links", arr); }} placeholder="Button text (e.g. Join Zoom)" />
+                <Input value={l.url} onChange={v => { const arr = [...data.links]; arr[i] = { ...arr[i], url: v }; update("links", arr); }} placeholder="URL" />
+              </div>
+            </div>
+          ))}
+          <Btn variant="ghost" onClick={() => update("links", [...data.links, { label: "", url: "" }])} style={{ width: "100%" }}>+ Add Link</Btn>
+        </div>}
+      </Card>
+    ),
+    custom: (
+      <Card key="custom">
+        <SectionLabel>Custom Content Blocks</SectionLabel>
+        <p style={{ fontSize: "12px", color: BSA.paleGray, margin: "0 0 12px", lineHeight: "1.5", fontFamily: "Arial, sans-serif" }}>Announcements, reminders, weather updates — anything unique to your event.</p>
+        {data.customBlocks.map((block, i) => (
+          <CustomBlockCard key={i} block={block} index={i}
+            onUpdate={b => { const blocks = [...data.customBlocks]; blocks[i] = b; update("customBlocks", blocks); }}
+            onRemove={() => update("customBlocks", data.customBlocks.filter((_, j) => j !== i))}
+            onMoveUp={() => moveBlock(i, -1)} onMoveDown={() => moveBlock(i, 1)}
+            isFirst={i === 0} isLast={i === data.customBlocks.length - 1}
+          />
+        ))}
+        <Btn variant="ghost" onClick={() => update("customBlocks", [...data.customBlocks, { title: "", content: "", style: "info" }])} style={{ width: "100%" }}>+ Add Content Block</Btn>
+      </Card>
+    ),
+    registration: (
+      <Card key="registration">
+        <SectionLabel>Registration CTA</SectionLabel>
+        <Toggle checked={data.showRegistration} onChange={v => update("showRegistration", v)} label="Include registration call to action" />
+        {data.showRegistration && <div style={{ display: "grid", gap: "12px", marginTop: "12px" }}>
+          <div><FieldLabel>Message</FieldLabel><Input value={data.registrationMessage} onChange={v => update("registrationMessage", v)} multiline /></div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <div><FieldLabel>Registration Link</FieldLabel><Input value={data.registrationLink} onChange={v => update("registrationLink", v)} placeholder="https://scoutingevent.com/..." /></div>
+            <div><FieldLabel>Button Text</FieldLabel><Input value={data.registrationButtonText} onChange={v => update("registrationButtonText", v)} placeholder="Register Now" /></div>
+          </div>
+        </div>}
+      </Card>
+    ),
+  };
+
+  return (
+    <div style={{ minHeight: "100vh", background: BSA.lightTan, fontFamily: "Arial, Helvetica, sans-serif", padding: "24px 16px" }}>
+
+      {/* Header */}
+      <div style={{ maxWidth: "1100px", margin: "0 auto 20px", textAlign: "center" }}>
+        <div style={{ display: "inline-block", background: BSA.blue, color: "#fff", fontFamily: "'Trebuchet MS', Arial, sans-serif", fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase", padding: "6px 16px", borderRadius: "2px", marginBottom: "12px", fontWeight: "bold" }}>
+          SVMBC · HUBSPOT EMAIL BUILDER
+        </div>
+        <h1 style={{ fontFamily: "'Trebuchet MS', Arial, sans-serif", fontSize: "28px", color: BSA.blue, margin: "0 0 4px", fontWeight: "bold" }}>
+          Pre-Event Communication Template
+        </h1>
+        <div style={{ width: "60px", height: "4px", background: BSA.red, margin: "8px auto 12px" }} />
+        <p style={{ color: BSA.warmGray, fontSize: "14px", margin: "0 0 16px", fontFamily: "Arial, sans-serif" }}>
+          BSA brand-compliant email builder · Event announcements, logistics, packing lists
+        </p>
+        <div style={{ display: "flex", justifyContent: "center", gap: "8px", flexWrap: "wrap" }}>
+          {Object.entries(presets).map(([key, p]) => (
+            <Btn key={key} variant="ghost" onClick={() => loadPreset(key)} style={{ fontSize: "12px", padding: "6px 14px" }}>{p.label}</Btn>
+          ))}
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", borderBottom: `2px solid ${BSA.tan}`, marginBottom: "20px", overflowX: "auto" }}>
+        <button style={tabStyle("edit")} onClick={() => setActiveTab("edit")}>Edit</button>
+        <button style={tabStyle("brand")} onClick={() => setActiveTab("brand")}>Brand</button>
+        <button style={tabStyle("order")} onClick={() => setActiveTab("order")}>Order</button>
+        <button style={tabStyle("preview")} onClick={() => setActiveTab("preview")}>Preview</button>
+        <button style={tabStyle("code")} onClick={() => setActiveTab("code")}>Output</button>
+        <div style={{ flex: 1 }} />
+        <button style={tabStyle("tips")} onClick={() => setActiveTab("tips")}>Tips</button>
+      </div>
+
+      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+
+        {activeTab === "edit" && (
+          <div style={{ display: "grid", gap: "16px" }}>
+            {order.map(id => sectionEditors[id])}
+            <Card>
+              <SectionLabel>Closing & Signature</SectionLabel>
+              <div style={{ display: "grid", gap: "12px", marginBottom: "12px" }}>
+                <div><FieldLabel>Closing Line</FieldLabel><Input value={data.closingLine} onChange={v => update("closingLine", v)} placeholder="See you all soon!" /></div>
+                <div><FieldLabel>Sign-off</FieldLabel><Input value={data.closingSignoff} onChange={v => update("closingSignoff", v)} placeholder="Yours in Scouting," /></div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div><FieldLabel>Name</FieldLabel><Input value={data.senderName} onChange={v => update("senderName", v)} placeholder="Heather Readhead" /></div>
+                <div><FieldLabel>Title</FieldLabel><Input value={data.senderTitle} onChange={v => update("senderTitle", v)} placeholder="Event Director" /></div>
+                <div><FieldLabel>Email</FieldLabel><Input value={data.senderEmail} onChange={v => update("senderEmail", v)} placeholder="heather@scouting.org" /></div>
+                <div><FieldLabel>Phone</FieldLabel><Input value={data.senderPhone} onChange={v => update("senderPhone", v)} placeholder="408-638-8323" /></div>
+              </div>
+              <div style={{ borderTop: `1px solid ${BSA.tan}`, paddingTop: "12px", marginTop: "12px" }}>
+                <FieldLabel>Signature Options</FieldLabel>
+                <Toggle checked={data.sigShowLogo} onChange={v => update("sigShowLogo", v)} label="Show SVMBC logo image (uncheck for reply/mobile style)" />
+                {data.sigShowLogo && <div style={{ marginTop: "8px" }}><FieldLabel>Logo Image URL</FieldLabel><Input value={data.sigLogoUrl} onChange={v => update("sigLogoUrl", v)} placeholder="https://svmbc.org/wp-content/uploads/..." /></div>}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "8px" }}>
+                  <div><FieldLabel>Newsletter Link</FieldLabel><Input value={data.sigNewsletterLink} onChange={v => update("sigNewsletterLink", v)} /></div>
+                  <div><FieldLabel>Facebook Link</FieldLabel><Input value={data.sigFacebookLink} onChange={v => update("sigFacebookLink", v)} /></div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === "brand" && (
+          <div style={{ display: "grid", gap: "16px" }}>
+            <Card>
+              <SectionLabel>Brand Color Palette</SectionLabel>
+              <p style={{ fontSize: "13px", color: BSA.warmGray, margin: "0 0 16px", lineHeight: "1.5" }}>Select the accent palette based on your event's target audience.</p>
+              <div style={{ display: "grid", gap: "8px" }}>
+                {Object.entries(accentMap).map(([key, a]) => (
+                  <label key={key} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", background: data.brandAccent === key ? BSA.lightTan : "#fff", border: `2px solid ${data.brandAccent === key ? BSA.blue : BSA.tan}`, borderRadius: "4px", cursor: "pointer", transition: "all 0.2s" }}
+                    onClick={() => update("brandAccent", key)}>
+                    <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: a.headerBg, border: "2px solid #fff", boxShadow: "0 1px 3px rgba(0,0,0,0.15)", flexShrink: 0 }} />
+                    <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
+                      <div style={{ width: "16px", height: "16px", borderRadius: "2px", background: a.primary }} />
+                      <div style={{ width: "16px", height: "16px", borderRadius: "2px", background: a.cta }} />
+                    </div>
+                    <span style={{ fontFamily: "'Trebuchet MS', sans-serif", fontSize: "14px", color: BSA.darkGray, fontWeight: data.brandAccent === key ? "bold" : "normal" }}>{a.label}</span>
+                  </label>
+                ))}
+              </div>
+            </Card>
+            <Card>
+              <SectionLabel>BSA Brand Reference</SectionLabel>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", marginBottom: "16px" }}>
+                {[
+                  { name: "Scouting Blue", hex: BSA.blue },
+                  { name: "Scouting Red", hex: BSA.red },
+                  { name: "Scouting Tan", hex: BSA.tan },
+                  { name: "Warm Gray", hex: BSA.warmGray },
+                  { name: "Dark Gray", hex: BSA.darkGray },
+                ].map(c => (
+                  <div key={c.hex} style={{ textAlign: "center" }}>
+                    <div style={{ width: "100%", paddingTop: "100%", borderRadius: "4px", background: c.hex, border: "1px solid rgba(0,0,0,0.1)" }} />
+                    <div style={{ fontSize: "10px", color: BSA.warmGray, marginTop: "4px", fontFamily: "Arial, sans-serif" }}>{c.name}</div>
+                    <div style={{ fontSize: "10px", color: BSA.paleGray, fontFamily: "monospace" }}>{c.hex}</div>
+                  </div>
+                ))}
+              </div>
+              <p style={{ fontSize: "12px", color: BSA.paleGray, margin: 0, lineHeight: "1.5" }}>
+                Fonts: Trebuchet MS (headings, bold), Arial (body text). Per BSA digital guidelines.
+              </p>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === "order" && (
+          <Card>
+            <SectionLabel>Section Order</SectionLabel>
+            <p style={{ fontSize: "13px", color: BSA.warmGray, margin: "0 0 16px", lineHeight: "1.5" }}>Reorder sections. Header and closing/signature always stay at top and bottom.</p>
+            {order.map((id, idx) => {
+              const def = sectionDefs.find(s => s.id === id);
+              return (
+                <div key={id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", background: "#fff", border: `1px solid ${BSA.tan}`, borderRadius: "4px", marginBottom: "8px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                    <button onClick={() => moveSection(idx, -1)} disabled={idx === 0} style={{ background: "none", border: `1px solid ${BSA.tan}`, borderRadius: "2px", cursor: idx === 0 ? "default" : "pointer", opacity: idx === 0 ? 0.3 : 1, fontSize: "11px", padding: "1px 6px" }}>↑</button>
+                    <button onClick={() => moveSection(idx, 1)} disabled={idx === order.length - 1} style={{ background: "none", border: `1px solid ${BSA.tan}`, borderRadius: "2px", cursor: idx === order.length - 1 ? "default" : "pointer", opacity: idx === order.length - 1 ? 0.3 : 1, fontSize: "11px", padding: "1px 6px" }}>↓</button>
+                  </div>
+                  <span style={{ fontFamily: "'Trebuchet MS', sans-serif", fontSize: "11px", color: BSA.blue, width: "20px", fontWeight: "bold" }}>{idx + 1}.</span>
+                  <span style={{ fontSize: "14px", color: BSA.darkGray }}>{def?.label || id}</span>
+                </div>
+              );
+            })}
+          </Card>
+        )}
+
+        {activeTab === "preview" && (
+          <div style={{ background: BSA.tan, borderRadius: "4px", padding: "32px 16px", display: "flex", justifyContent: "center" }}>
+            <div dangerouslySetInnerHTML={{ __html: generateHTML(data) }} style={{ width: "100%", maxWidth: "640px" }} />
+          </div>
+        )}
+
+        {activeTab === "code" && (
+          <div style={{ display: "grid", gap: "16px" }}>
+            <Card>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                <SectionLabel>HubSpot HTML</SectionLabel>
+                <Btn variant={copied ? "success" : "primary"} onClick={copyHTML}>{copied ? "✓ Copied!" : "Copy HTML"}</Btn>
+              </div>
+              <pre style={{ background: BSA.darkGray, color: BSA.tan, padding: "20px", borderRadius: "4px", fontSize: "11px", fontFamily: "monospace", overflow: "auto", maxHeight: "400px", lineHeight: "1.6", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                {generateHTML(data)}
+              </pre>
+              <div style={{ marginTop: "12px", padding: "12px 16px", background: BSA.lightTan, borderRadius: "4px", border: `1px solid ${BSA.tan}` }}>
+                <p style={{ margin: 0, fontSize: "13px", color: BSA.warmGray, lineHeight: "1.5" }}>
+                  <strong>HubSpot:</strong> Copy → Marketing → Email → Create → "Code Your Own" → Paste → Send. <strong>Reminder:</strong> Replace greeting with {"{{ contact.firstname }}"} for personalization.
+                </p>
+              </div>
+            </Card>
+            <Card>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <SectionLabel>Outlook / Gmail Paste</SectionLabel>
+                <Btn variant={outlookCopied ? "success" : "red"} onClick={copyOutlook}>{outlookCopied ? "✓ Copied!" : "Copy for Outlook"}</Btn>
+              </div>
+              <p style={{ margin: "0 0 12px", fontSize: "13px", color: BSA.warmGray, lineHeight: "1.6" }}>
+                Copies formatted content to your clipboard. Open a new email in Outlook or Gmail and paste (Ctrl+V). Styling, colors, and links carry over as rich text.
+              </p>
+              <div style={{ background: BSA.lightTan, border: `1px solid ${BSA.tan}`, borderRadius: "4px", padding: "20px", maxHeight: "400px", overflow: "auto" }}>
+                <div dangerouslySetInnerHTML={{ __html: generateOutlookHTML(data) }} />
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {activeTab === "tips" && (
+          <div style={{ display: "grid", gap: "16px" }}>
+            {[
+              { title: "Pre-Event Email Best Practices", content: "Send 1-2 weeks before the event with all logistics. Follow up with a reminder 2-3 days before. Include everything families need: check-in times, what to bring, parking, meals, and health forms." },
+              { title: "Numbered Detail Items", content: "The numbered format (like the Bearcub Paw example) makes it easy for families to scan and reference. Each item covers one topic: check-in, parking, meals, health, cabins, etc." },
+              { title: "Packing Lists", content: "Use the checklist format so families can print and check off items. Be specific about weather-appropriate gear for outdoor events." },
+              { title: "BSA Brand Compliance", content: "This template uses official BSA colors (#003F87 Blue, #CE1126 Red, #D6CEBD Tan), approved fonts (Trebuchet MS headings, Arial body), and the red accent stripe — per BSA Brand Guidelines 310-0231." },
+              { title: "Token Replacement", content: "Use {eventName}, {location}, and {eventDates} anywhere in your text. They auto-replace in the output." },
+              { title: "HubSpot Personalization", content: "After pasting, replace the greeting with \"Hello {{ contact.firstname }},\" for personalization. Use any HubSpot contact property token." },
+            ].map((tip, i) => (
+              <Card key={i}>
+                <h3 style={{ margin: "0 0 8px", fontFamily: "'Trebuchet MS', sans-serif", fontSize: "15px", color: BSA.blue, fontWeight: "bold" }}>{tip.title}</h3>
+                <p style={{ margin: 0, fontSize: "13px", color: BSA.warmGray, lineHeight: "1.6" }}>{tip.content}</p>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<PreEventEmailBuilder />);
+</script>
+</body>
+</html>

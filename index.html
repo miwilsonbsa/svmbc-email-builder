@@ -3,732 +3,257 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SVMBC Post-Event Email Builder</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-<style>*{margin:0;padding:0;box-sizing:border-box;}</style>
+<title>SVMBC Email Builders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Source+Sans+3:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bsa-blue: #003F87;
+    --bsa-red: #CE1126;
+    --bsa-tan: #D6CEBD;
+    --bsa-gray: #515354;
+    --bsa-light-tan: #F5F1EB;
+    --bsa-white: #FFFFFF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    min-height: 100vh;
+    background: var(--bsa-light-tan);
+    font-family: 'Source Sans 3', 'Trebuchet MS', Arial, sans-serif;
+    color: var(--bsa-gray);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .header {
+    background: var(--bsa-blue);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    top: 0; right: -60px; bottom: 0;
+    width: 240px;
+    background: var(--bsa-red);
+    transform: skewX(-12deg);
+    opacity: 0.9;
+  }
+  .header-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .header img {
+    height: 52px;
+    flex-shrink: 0;
+  }
+  .header-text h1 {
+    font-family: 'Oswald', 'Trebuchet MS', sans-serif;
+    font-weight: 700;
+    font-size: 26px;
+    color: var(--bsa-white);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .header-text p {
+    font-size: 14px;
+    color: var(--bsa-tan);
+    margin-top: 4px;
+    letter-spacing: 0.3px;
+  }
+
+  /* Main */
+  .main {
+    flex: 1;
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 48px 32px 64px;
+  }
+  .subtitle {
+    font-family: 'Oswald', sans-serif;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: var(--bsa-blue);
+    margin-bottom: 24px;
+    font-weight: 600;
+  }
+
+  /* Cards */
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 640px) {
+    .cards { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--bsa-white);
+    border-radius: 6px;
+    border: 1.5px solid var(--bsa-tan);
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    display: flex;
+    flex-direction: column;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,63,135,0.12);
+    border-color: var(--bsa-blue);
+  }
+  .card-accent {
+    height: 6px;
+    width: 100%;
+  }
+  .card-accent.pre { background: linear-gradient(90deg, #5B7A3A, var(--bsa-blue)); }
+  .card-accent.post { background: linear-gradient(90deg, var(--bsa-blue), var(--bsa-red)); }
+
+  .card-body {
+    padding: 28px 24px 24px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .card-icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+  }
+  .card-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--bsa-blue);
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+  }
+  .card-desc {
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--bsa-gray);
+    flex: 1;
+    margin-bottom: 20px;
+  }
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .tag {
+    font-size: 11px;
+    font-family: 'Oswald', sans-serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 3px;
+    background: var(--bsa-light-tan);
+    color: var(--bsa-gray);
+    font-weight: 600;
+  }
+  .card-cta {
+    font-family: 'Oswald', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--bsa-blue);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card:hover .card-cta { color: var(--bsa-red); }
+  .card-cta svg { transition: transform 0.2s; }
+  .card:hover .card-cta svg { transform: translateX(4px); }
+
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 20px 32px;
+    font-size: 12px;
+    color: var(--bsa-gray);
+    border-top: 1px solid var(--bsa-tan);
+    background: var(--bsa-white);
+  }
+  .footer a { color: var(--bsa-blue); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+</style>
 </head>
 <body>
-<div id="root"></div>
-<script type="text/babel">
-const { useState } = React;
 
-/* ── BSA Brand Colors (from 310-0231.pdf) ── */
-const BSA = {
-  blue: "#003F87",
-  red: "#CE1126",
-  tan: "#D6CEBD",
-  warmGray: "#515354",
-  darkGray: "#232528",
-  lightTan: "#E9E9E4",
-  paleBlue: "#9AB3D5",
-  darkBlue: "#003366",
-  darkTan: "#AD9D7B",
-  paleGray: "#858787",
-  white: "#FFFFFF",
-  // Sub-brands
-  cubGold: "#FDC116",
-  olive: "#243E2C",
-  venturingGreen: "#006B3F",
-};
-
-const defaultData = {
-  eventName: "",
-  location: "",
-  greeting: "Hello Folks,",
-  openingMessage: "",
-  specialThanks: "",
-  photoAsk: true,
-  photoLink: "",
-  photoMessage: "Please share your photos and videos with us!",
-  surveyAsk: true,
-  surveyLink: "",
-  surveyMessage: "Please share your feedback on the survey. We put a lot of effort into this event and we would appreciate it!",
-  customBlocks: [],
-  showEvents: false,
-  eventsTransition: "Looking for more fun things to do? We have a few upcoming events that may be perfect for you and your family.",
-  events: [],
-  showTraining: false,
-  trainingMessage: "Looking to grow your Scouting skills? Check out upcoming training opportunities from SVMBC.",
-  trainingLink: "https://svmbc.org/training/",
-  trainings: [],
-  showReservation: false,
-  reservationYear: "2026",
-  reservationLocation: "Camp Hi-Sierra",
-  reservationLink: "",
-  reservationMessage: "If you liked {location} and want to reserve a campsite, feel free to reach out anytime!",
-  closingLine: "",
-  senderName: "",
-  senderTitle: "",
-  senderEmail: "",
-  senderPhone: "",
-  sigLogoUrl: "https://svmbc.org/wp-content/uploads/2024/08/Colored-Horizontal-Logo-png.png",
-  sigShowLogo: true,
-  sigNewsletterLink: "https://svmbc.org/newsletter/",
-  sigFacebookLink: "https://www.facebook.com/SVMBC",
-  brandAccent: "blue", // blue, red, cubGold, olive, venturingGreen
-};
-
-const accentMap = {
-  blue: { primary: BSA.blue, cta: BSA.red, headerBg: BSA.blue, label: "BSA Corporate (Blue)" },
-  red: { primary: BSA.red, cta: BSA.blue, headerBg: BSA.red, label: "BSA Red Accent" },
-  cubGold: { primary: BSA.blue, cta: BSA.cubGold, headerBg: BSA.blue, label: "Cub Scouting (Gold)" },
-  olive: { primary: BSA.olive, cta: BSA.red, headerBg: BSA.olive, label: "Scouts BSA (Olive)" },
-  venturingGreen: { primary: BSA.venturingGreen, cta: BSA.cubGold, headerBg: BSA.venturingGreen, label: "Venturing (Green)" },
-};
-
-const presets = {
-  blank: { label: "🆕 Blank", data: defaultData },
-  campFollowUp: {
-    label: "🏕️ Camp Weekend",
-    data: {
-      ...defaultData,
-      eventName: "Labor Day Scout Camp",
-      location: "Camp Hi-Sierra",
-      greeting: "Hello Campers!",
-      openingMessage: "We hope you had a fantastic time at the {eventName} at {location}! We loved having you up at camp. Thank you for giving us your survey!",
-      photoMessage: "If you have any photos that you would like to share with us, we would love to have them!",
-      photoLink: "https://photos.app.goo.gl/example",
-      surveyAsk: false,
-      showEvents: true,
-      eventsTransition: "Looking for more fun things to do on the weekends? We have a few upcoming events that may be perfect for you and your family.",
-      events: [{ name: "Event Name", audience: "Scouts BSA/Venturing", description: "Brief description.", link: "https://scoutingevent.com/055-example" }],
-      showReservation: true,
-      reservationLink: "https://example.com/reserve",
-      closingLine: "We hope you had a great weekend!",
-      brandAccent: "blue",
-    },
-  },
-  specialEvent: {
-    label: "🎭 Events",
-    data: {
-      ...defaultData,
-      eventName: "OARS (Outdoor Adventure Roleplay Scenario)",
-      location: "Camp Hi-Sierra",
-      greeting: "Hello Folks,",
-      openingMessage: "Thank you for coming out to our {eventName}! It really is becoming our very own tradition at {location} and we couldn't be more proud.",
-      specialThanks: "Special thanks go out to our volunteers, kitchen crew, and everyone who helped make this event a reality!",
-      photoMessage: "Please share your photos and videos! We would love to see the costumes and moments that made the event so immersive.",
-      photoLink: "https://photos.app.goo.gl/example",
-      surveyAsk: true,
-      surveyMessage: "Please share your feedback. Let us know what your scouts liked, what was tough, and everything in-between. This event grows better each year with your support!",
-      surveyLink: "https://scouting.co1.qualtrics.com/jfe/form/example",
-      customBlocks: [
-        { title: "Patches", content: "Patches have been bundled by unit and are available for pickup at will call in San Jose. Out of Council units will receive theirs by mail.", style: "info" },
-        { title: "Lost & Found", content: "Items found: (list here). Available at the Council office. Contact us to claim.", style: "warning" },
-      ],
-      showEvents: false,
-      showReservation: false,
-      closingLine: "We hope to see you all again next year to continue the story and adventure!",
-      brandAccent: "blue",
-    },
-  },
-};
-
-/* ── UI Components (styled with BSA palette) ── */
-const SectionLabel = ({ children }) => (
-  <div style={{ fontFamily: "'Trebuchet MS', Arial, sans-serif", fontSize: "11px", letterSpacing: "1.5px", textTransform: "uppercase", color: BSA.blue, marginBottom: "6px", fontWeight: "bold" }}>{children}</div>
-);
-
-const Input = ({ value, onChange, placeholder, multiline, style: s }) => {
-  const base = {
-    width: "100%", padding: "10px 12px", border: `1.5px solid ${BSA.tan}`, borderRadius: "4px",
-    fontFamily: "Arial, Helvetica, sans-serif", fontSize: "13px", color: BSA.darkGray, background: BSA.white,
-    outline: "none", transition: "border-color 0.2s", boxSizing: "border-box", ...s,
-  };
-  if (multiline) return <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={3} style={{ ...base, resize: "vertical" }} onFocus={e => e.target.style.borderColor = BSA.blue} onBlur={e => e.target.style.borderColor = BSA.tan} />;
-  return <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={base} onFocus={e => e.target.style.borderColor = BSA.blue} onBlur={e => e.target.style.borderColor = BSA.tan} />;
-};
-
-const Toggle = ({ checked, onChange, label }) => (
-  <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "13px", fontFamily: "Arial, sans-serif", color: BSA.darkGray }}>
-    <div onClick={() => onChange(!checked)} style={{ width: "40px", height: "22px", borderRadius: "11px", background: checked ? BSA.blue : BSA.tan, position: "relative", transition: "background 0.25s", flexShrink: 0 }}>
-      <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: "#fff", position: "absolute", top: "2px", left: checked ? "20px" : "2px", transition: "left 0.25s", boxShadow: "0 1px 3px rgba(0,0,0,0.15)" }} />
-    </div>
-    {label}
-  </label>
-);
-
-const Btn = ({ children, onClick, variant = "primary", style: s }) => {
-  const styles = {
-    primary: { background: BSA.blue, color: "#fff" },
-    red: { background: BSA.red, color: "#fff" },
-    success: { background: BSA.blue, color: "#fff" },
-    ghost: { background: "none", color: BSA.blue, border: `1.5px dashed ${BSA.tan}` },
-    danger: { background: "none", color: BSA.red, border: `1px solid #ecc` },
-  };
-  return <button onClick={onClick} style={{ padding: "8px 18px", border: "none", borderRadius: "4px", cursor: "pointer", fontFamily: "'Trebuchet MS', Arial, sans-serif", fontSize: "13px", fontWeight: "bold", transition: "opacity 0.2s", ...styles[variant], ...s }}>{children}</button>;
-};
-
-const Card = ({ children, style: s }) => (
-  <div style={{ background: "#fff", borderRadius: "6px", padding: "24px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)", border: `1px solid ${BSA.lightTan}`, ...s }}>{children}</div>
-);
-
-const FieldLabel = ({ children }) => <div style={{ fontSize: "12px", color: BSA.warmGray, marginBottom: "4px", fontFamily: "Arial, sans-serif" }}>{children}</div>;
-
-/* ── Custom Block Card ── */
-const CustomBlockCard = ({ block, index, onUpdate, onRemove, onMoveUp, onMoveDown, isFirst, isLast }) => {
-  const styleOpts = [
-    { value: "info", label: "ℹ️ Info (Blue)" }, { value: "warning", label: "⚠️ Alert (Gold)" },
-    { value: "success", label: "✅ Success (Green)" }, { value: "plain", label: "📝 Plain" },
-  ];
-  return (
-    <div style={{ background: BSA.lightTan, border: `1px solid ${BSA.tan}`, borderRadius: "4px", padding: "14px", marginBottom: "10px" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-        <span style={{ fontFamily: "'Trebuchet MS', sans-serif", fontSize: "11px", color: BSA.blue, letterSpacing: "1px", fontWeight: "bold" }}>BLOCK {index + 1}</span>
-        <div style={{ display: "flex", gap: "6px" }}>
-          {!isFirst && <button onClick={onMoveUp} style={{ background: "none", border: `1px solid ${BSA.tan}`, borderRadius: "3px", cursor: "pointer", fontSize: "11px", padding: "2px 6px", color: BSA.warmGray }}>↑</button>}
-          {!isLast && <button onClick={onMoveDown} style={{ background: "none", border: `1px solid ${BSA.tan}`, borderRadius: "3px", cursor: "pointer", fontSize: "11px", padding: "2px 6px", color: BSA.warmGray }}>↓</button>}
-          <Btn variant="danger" onClick={onRemove} style={{ padding: "2px 8px", fontSize: "12px" }}>Remove</Btn>
-        </div>
-      </div>
-      <div style={{ display: "grid", gap: "8px" }}>
-        <Input value={block.title} onChange={v => onUpdate({ ...block, title: v })} placeholder="Block Title (e.g., Patches, Lost & Found)" />
-        <Input value={block.content} onChange={v => onUpdate({ ...block, content: v })} placeholder="Block content..." multiline />
-        <div>
-          <FieldLabel>Style</FieldLabel>
-          <select value={block.style || "info"} onChange={e => onUpdate({ ...block, style: e.target.value })} style={{ width: "100%", padding: "8px 12px", border: `1.5px solid ${BSA.tan}`, borderRadius: "4px", fontFamily: "Arial, sans-serif", fontSize: "13px", color: BSA.darkGray, background: "#fff", outline: "none" }}>
-            {styleOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const EventCard = ({ event, index, onUpdate, onRemove }) => (
-  <div style={{ background: BSA.lightTan, border: `1px solid ${BSA.tan}`, borderRadius: "4px", padding: "14px", marginBottom: "10px" }}>
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-      <span style={{ fontFamily: "'Trebuchet MS', sans-serif", fontSize: "11px", color: BSA.blue, letterSpacing: "1px", fontWeight: "bold" }}>EVENT {index + 1}</span>
-      <Btn variant="danger" onClick={onRemove} style={{ padding: "2px 8px", fontSize: "12px" }}>Remove</Btn>
-    </div>
-    <div style={{ display: "grid", gap: "8px" }}>
-      <Input value={event.name} onChange={v => onUpdate({ ...event, name: v })} placeholder="Event Name" />
-      <Input value={event.audience} onChange={v => onUpdate({ ...event, audience: v })} placeholder="Target Audience" />
-      <Input value={event.description} onChange={v => onUpdate({ ...event, description: v })} placeholder="Brief description" multiline />
-      <Input value={event.link} onChange={v => onUpdate({ ...event, link: v })} placeholder="Registration link" />
+<div class="header">
+  <div class="header-inner">
+    <img src="https://svmbc.org/wp-content/uploads/2024/08/Colored-Horizontal-Logo-png.png" alt="SVMBC Logo" />
+    <div class="header-text">
+      <h1>Email Builders</h1>
+      <p>Silicon Valley Monterey Bay Council</p>
     </div>
   </div>
-);
+</div>
 
-const sectionDefs = [
-  { id: "opening", label: "Opening Message" }, { id: "thanks", label: "Special Thanks" },
-  { id: "photo", label: "Photo Request" }, { id: "survey", label: "Survey Request" },
-  { id: "custom", label: "Custom Blocks" }, { id: "events", label: "Upcoming Events" },
-  { id: "training", label: "Training" }, { id: "reservation", label: "Reservation CTA" },
-];
+<div class="main">
+  <div class="subtitle">Choose a Builder</div>
+  <div class="cards">
 
-/* ── HTML Generator with BSA Brand Compliance ── */
-function generateHTML(data) {
-  const accent = accentMap[data.brandAccent] || accentMap.blue;
-  const resolve = t => (t || "").replace(/\{eventName\}/g, data.eventName).replace(/\{location\}/g, data.location);
-
-  const blockBorders = { info: accent.primary, warning: BSA.cubGold, success: BSA.olive, plain: "transparent" };
-
-  const sectionHTML = {
-    opening: data.openingMessage ? `<tr><td style="padding:24px 40px 8px 40px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:${BSA.darkGray};line-height:1.7;">${resolve(data.openingMessage)}</p></td></tr>` : "",
-
-    thanks: data.specialThanks ? `<tr><td style="padding:12px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-radius:4px;padding:16px 20px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.specialThanks)}</p></td></tr></table></td></tr>` : "",
-
-    photo: data.photoAsk ? `<tr><td style="padding:12px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${accent.cta};border-radius:0 4px 4px 0;padding:16px 20px;"><p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.5;">${resolve(data.photoMessage)}</p>${data.photoLink ? `<a href="${data.photoLink}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:10px 24px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">Upload Photos</a>` : ""}</td></tr></table></td></tr>` : "",
-
-    survey: data.surveyAsk ? `<tr><td style="padding:12px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${accent.primary};border-radius:0 4px 4px 0;padding:16px 20px;"><p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.5;">${resolve(data.surveyMessage)}</p>${data.surveyLink ? `<a href="${data.surveyLink}" style="display:inline-block;background:${accent.primary};color:#fff;text-decoration:none;padding:10px 24px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">Take the Survey</a>` : ""}</td></tr></table></td></tr>` : "",
-
-    custom: data.customBlocks.length > 0 ? data.customBlocks.map(b => `<tr><td style="padding:8px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};border-radius:0 4px 4px 0;padding:16px 20px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${resolve(b.content)}</p></td></tr></table></td></tr>`).join("\n") : "",
-
-    events: data.showEvents && data.events.length > 0 ? `<tr><td style="padding:24px 40px 8px;"><h2 style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:20px;color:${accent.primary};font-weight:bold;">Upcoming Events</h2><p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.5;">${resolve(data.eventsTransition)}</p></td></tr><tr><td style="padding:0 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%">${data.events.filter(e => e.name).map((e, i) => `<tr><td style="padding:0 0 12px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-radius:4px;padding:16px;"><p style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:16px;font-weight:bold;color:${BSA.darkGray};">${i + 1}. ${e.name}</p>${e.audience ? `<p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:11px;color:${accent.primary};text-transform:uppercase;letter-spacing:1px;font-weight:bold;">${e.audience}</p>` : ""}<p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.5;">${e.description}</p>${e.link ? `<a href="${e.link}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:10px 24px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">Learn More &amp; Register</a>` : ""}</td></tr></table></td></tr>`).join("\n")}</table></td></tr>` : "",
-
-    training: data.showTraining ? (() => {
-      const cards = data.trainings.filter(t => t.name).map(t => `<tr><td style="padding:0 0 10px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:#fff;border:1px solid ${BSA.tan};border-radius:4px;padding:14px 18px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="vertical-align:top;"><p style="margin:0 0 2px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${t.name}</p>${t.date ? `<p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:12px;color:${accent.primary};font-weight:bold;">${t.date}</p>` : ""}${t.description ? `<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:${BSA.warmGray};line-height:1.5;">${t.description}</p>` : ""}</td>${t.link ? `<td style="vertical-align:middle;padding-left:12px;white-space:nowrap;"><a href="${t.link}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:8px 16px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;">Register</a></td>` : ""}</tr></table></td></tr></table></td></tr>`).join("\n");
-      return `<tr><td style="padding:20px 40px 8px;"><h2 style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:18px;color:${accent.primary};font-weight:bold;">Upcoming Training</h2><p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.trainingMessage)}</p></td></tr>${cards ? `<tr><td style="padding:0 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%">${cards}</table></td></tr>` : ""}<tr><td style="padding:8px 40px 4px;"><a href="${data.trainingLink}" style="font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;color:${accent.primary};font-weight:bold;text-decoration:none;">View Full Training Calendar →</a></td></tr>`;
-    })() : "",
-
-    reservation: data.showReservation ? `<tr><td style="padding:16px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${accent.primary};border-radius:4px;padding:24px;text-align:center;"><p style="margin:0 0 12px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:18px;color:#fff;font-weight:bold;">Reserve Your Spot for ${data.reservationYear} at ${data.reservationLocation}!</p><p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:rgba(255,255,255,0.8);line-height:1.5;">${resolve(data.reservationMessage)}</p>${data.reservationLink ? `<a href="${data.reservationLink}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:12px 32px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:14px;font-weight:bold;">Reserve Now</a>` : ""}</td></tr></table></td></tr>` : "",
-  };
-
-  const order = data.sectionOrder || sectionDefs.map(s => s.id);
-  const body = order.map(id => sectionHTML[id] || "").filter(Boolean).join("\n");
-
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:${BSA.lightTan};font-family:Arial,Helvetica,sans-serif;">
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:${BSA.lightTan};">
-<tr><td align="center" style="padding:30px 16px;">
-<table cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;background:#fff;border-radius:0;overflow:hidden;">
-
-<!-- HEADER with BSA Diagonal Overlay -->
-<tr><td style="background:${accent.headerBg};padding:0;position:relative;">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="padding:28px 40px 24px 40px;">
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr>
-<td style="vertical-align:middle;">
-<h1 style="margin:0;font-family:'Trebuchet MS',Arial,sans-serif;color:#fff;font-size:24px;font-weight:bold;">${data.greeting}</h1>
-</td>
-</tr>
-</table>
-</td></tr>
-<!-- Diagonal accent stripe (BSA brand element) -->
-<tr><td style="padding:0;height:6px;background:${accent.cta};"></td></tr>
-</table>
-</td></tr>
-
-${body}
-
-<!-- CLOSING -->
-${data.closingLine ? `<tr><td style="padding:24px 40px 16px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.closingLine)}</p></td></tr>` : ""}
-
-${data.senderName ? `<!-- SIGNATURE (SVMBC Official Email Signature) -->
-<tr><td style="padding:8px 40px 24px;">
-<table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="border-top:2px solid ${BSA.tan};padding-top:16px;">
-
-<!-- Name | Title -->
-<p style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:14px;color:${BSA.darkGray};"><strong style="color:${BSA.blue};">${data.senderName}</strong>${data.senderTitle ? ` <span style="color:${BSA.warmGray};">|</span> <span style="color:${BSA.darkGray};">${data.senderTitle}</span>` : ""}</p>
-
-<!-- Phone -->
-${data.senderPhone ? `<p style="margin:0 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${BSA.darkGray};">Phone: ${data.senderPhone}</p>` : ""}
-
-<!-- Email -->
-${data.senderEmail ? `<p style="margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:12px;"><a href="mailto:${data.senderEmail}" style="color:${BSA.blue};text-decoration:underline;">${data.senderEmail}</a></p>` : ""}
-
-<!-- Logo -->
-${data.sigShowLogo && data.sigLogoUrl ? `<div style="margin:0 0 10px;"><img src="${data.sigLogoUrl}" alt="" width="280" style="display:block;width:280px;max-width:100%;height:auto;" onerror="this.style.display='none';this.nextElementSibling.style.display='block';" /><div style="display:none;"><p style="margin:0 0 2px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;color:${BSA.blue};">Scouting America</p><p style="margin:0;font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;color:${BSA.red};">Silicon Valley Monterey Bay Council</p></div></div>` : `<p style="margin:0 0 2px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;color:${BSA.blue};">Scouting America</p><p style="margin:0 0 10px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;color:${BSA.red};">Silicon Valley Monterey Bay Council</p>`}
-
-<!-- Addresses -->
-<p style="margin:0 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${BSA.warmGray};line-height:1.5;">Council Service Center: 1900 The Alameda, Suite 100, San Jose, CA 95126</p>
-<p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${BSA.warmGray};line-height:1.5;">Monterey County Trading Post: 187 El Dorado Street, Unit F, Monterey, CA 93940</p>
-
-<!-- Links -->
-<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;">
-<a href="https://www.svmbc.org" style="color:${BSA.blue};text-decoration:underline;font-weight:bold;">www.svmbc.org</a>
-<span style="color:${BSA.warmGray};"> | </span>
-<a href="${data.sigNewsletterLink || 'https://svmbc.org/newsletter/'}" style="color:${BSA.blue};text-decoration:underline;">Subscribe to our Newsletter</a>
-<span style="color:${BSA.warmGray};"> | </span>
-<a href="${data.sigFacebookLink || 'https://www.facebook.com/SVMBC'}" style="color:${BSA.blue};text-decoration:underline;">Facebook</a>
-</p>
-
-</td></tr></table>
-</td></tr>` : ""}
-
-
-
-</table>
-</td></tr></table>
-</body></html>`;
-}
-
-/* ── Outlook Paste-Friendly Generator ── */
-function generateOutlookHTML(data) {
-  const accent = accentMap[data.brandAccent] || accentMap.blue;
-  const resolve = t => (t || "").replace(/\{eventName\}/g, data.eventName).replace(/\{location\}/g, data.location);
-  const blockBorders = { info: accent.primary, warning: BSA.cubGold, success: BSA.olive, plain: "transparent" };
-
-  const parts = [];
-
-  // Header greeting
-  parts.push(`<p style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:22px;font-weight:bold;color:${accent.headerBg};">${data.greeting}</p>`);
-  parts.push(`<hr style="border:none;height:4px;background:${accent.cta};margin:8px 0 20px;" />`);
-
-  const order = data.sectionOrder || sectionDefs.map(s => s.id);
-
-  order.forEach(id => {
-    if (id === "opening" && data.openingMessage) {
-      parts.push(`<p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.7;">${resolve(data.openingMessage)}</p>`);
-    }
-    if (id === "thanks" && data.specialThanks) {
-      parts.push(`<div style="background:${BSA.lightTan};padding:14px 18px;margin:0 0 16px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.specialThanks)}</p></div>`);
-    }
-    if (id === "photo" && data.photoAsk) {
-      parts.push(`<div style="background:${BSA.lightTan};border-left:4px solid ${accent.cta};padding:14px 18px;margin:0 0 16px;"><p style="margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.5;">${resolve(data.photoMessage)}</p>${data.photoLink ? `<p style="margin:0;"><a href="${data.photoLink}" style="color:${accent.cta};font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">Upload Photos →</a></p>` : ""}</div>`);
-    }
-    if (id === "survey" && data.surveyAsk) {
-      parts.push(`<div style="background:${BSA.lightTan};border-left:4px solid ${accent.primary};padding:14px 18px;margin:0 0 16px;"><p style="margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.5;">${resolve(data.surveyMessage)}</p>${data.surveyLink ? `<p style="margin:0;"><a href="${data.surveyLink}" style="color:${accent.primary};font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">Take the Survey →</a></p>` : ""}</div>`);
-    }
-    if (id === "custom" && data.customBlocks.length > 0) {
-      data.customBlocks.forEach(b => {
-        parts.push(`<div style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};padding:14px 18px;margin:0 0 12px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${resolve(b.content)}</p></div>`);
-      });
-    }
-    if (id === "events" && data.showEvents && data.events.length > 0) {
-      parts.push(`<p style="margin:16px 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:18px;font-weight:bold;color:${accent.primary};">Upcoming Events</p>`);
-      parts.push(`<p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.5;">${resolve(data.eventsTransition)}</p>`);
-      data.events.filter(e => e.name).forEach((e, i) => {
-        parts.push(`<div style="background:${BSA.lightTan};padding:14px 18px;margin:0 0 10px;"><p style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${i + 1}. ${e.name}</p>${e.audience ? `<p style="margin:0 0 6px;font-family:Arial,sans-serif;font-size:11px;color:${accent.primary};text-transform:uppercase;letter-spacing:1px;font-weight:bold;">${e.audience}</p>` : ""}<p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.5;">${e.description}</p>${e.link ? `<p style="margin:0;"><a href="${e.link}" style="color:${accent.cta};font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">Learn More &amp; Register →</a></p>` : ""}</div>`);
-      });
-    }
-    if (id === "training" && data.showTraining) {
-      parts.push(`<p style="margin:16px 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:17px;font-weight:bold;color:${accent.primary};">Upcoming Training</p>`);
-      parts.push(`<p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.trainingMessage)}</p>`);
-      data.trainings.filter(t => t.name).forEach(t => {
-        parts.push(`<div style="background:#fff;border:1px solid ${BSA.tan};padding:12px 16px;margin:0 0 8px;"><p style="margin:0 0 2px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:14px;font-weight:bold;color:${BSA.darkGray};">${t.name}</p>${t.date ? `<p style="margin:0 0 4px;font-family:Arial,sans-serif;font-size:12px;color:${accent.primary};font-weight:bold;">${t.date}</p>` : ""}${t.description ? `<p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:${BSA.warmGray};line-height:1.5;">${t.description}</p>` : ""}${t.link ? `<p style="margin:0;"><a href="${t.link}" style="color:${accent.cta};font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;">Register →</a></p>` : ""}</div>`);
-      });
-      parts.push(`<p style="margin:8px 0 16px;"><a href="${data.trainingLink}" style="color:${accent.primary};font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;text-decoration:none;">View Full Training Calendar →</a></p>`);
-    }
-    if (id === "reservation" && data.showReservation) {
-      parts.push(`<div style="background:${accent.primary};padding:20px 24px;margin:12px 0 16px;text-align:center;"><p style="margin:0 0 10px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:17px;color:#fff;font-weight:bold;">Reserve Your Spot for ${data.reservationYear} at ${data.reservationLocation}!</p><p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:rgba(255,255,255,0.8);line-height:1.5;">${resolve(data.reservationMessage)}</p>${data.reservationLink ? `<p style="margin:0;"><a href="${data.reservationLink}" style="color:#fff;font-family:'Trebuchet MS',Arial,sans-serif;font-size:14px;font-weight:bold;background:${accent.cta};padding:10px 28px;text-decoration:none;">Reserve Now</a></p>` : ""}</div>`);
-    }
-  });
-
-  // Closing
-  if (data.closingLine) {
-    parts.push(`<p style="margin:16px 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.closingLine)}</p>`);
-  }
-
-  // Signature (SVMBC Official)
-  if (data.senderName) {
-    let sig = `<div style="border-top:2px solid ${BSA.tan};padding-top:14px;margin-top:8px;">`;
-    sig += `<p style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:14px;color:${BSA.darkGray};"><strong style="color:${BSA.blue};">${data.senderName}</strong>${data.senderTitle ? ` <span style="color:${BSA.warmGray};">|</span> <span>${data.senderTitle}</span>` : ""}</p>`;
-    if (data.senderPhone) sig += `<p style="margin:0 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${BSA.darkGray};">Phone: ${data.senderPhone}</p>`;
-    if (data.senderEmail) sig += `<p style="margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:12px;"><a href="mailto:${data.senderEmail}" style="color:${BSA.blue};text-decoration:underline;">${data.senderEmail}</a></p>`;
-    // In Outlook paste, use text instead of image for reliability
-    sig += `<p style="margin:0 0 2px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;color:${BSA.blue};">Scouting America</p>`;
-    sig += `<p style="margin:0 0 8px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;color:${BSA.red};">Silicon Valley Monterey Bay Council</p>`;
-    sig += `<p style="margin:0 0 2px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${BSA.warmGray};line-height:1.5;">Council Service Center: 1900 The Alameda, Suite 100, San Jose, CA 95126</p>`;
-    sig += `<p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:11px;color:${BSA.warmGray};line-height:1.5;">Monterey County Trading Post: 187 El Dorado Street, Unit F, Monterey, CA 93940</p>`;
-    sig += `<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;"><a href="https://www.svmbc.org" style="color:${BSA.blue};text-decoration:underline;font-weight:bold;">www.svmbc.org</a> <span style="color:${BSA.warmGray};">|</span> <a href="${data.sigNewsletterLink || 'https://svmbc.org/newsletter/'}" style="color:${BSA.blue};text-decoration:underline;">Subscribe to our Newsletter</a> <span style="color:${BSA.warmGray};">|</span> <a href="${data.sigFacebookLink || 'https://www.facebook.com/SVMBC'}" style="color:${BSA.blue};text-decoration:underline;">Facebook</a></p>`;
-    sig += `</div>`;
-    parts.push(sig);
-  }
-
-  return parts.join("\n");
-}
-
-/* ── Main App ── */
-function PostEventTemplateBuilder() {
-  const [data, setData] = useState({ ...defaultData, sectionOrder: sectionDefs.map(s => s.id) });
-  const [activeTab, setActiveTab] = useState("edit");
-  const [copied, setCopied] = useState(false);
-  const [outlookCopied, setOutlookCopied] = useState(false);
-
-  const update = (key, val) => setData(d => ({ ...d, [key]: val }));
-  const loadPreset = key => { const p = presets[key].data; setData({ ...p, sectionOrder: p.sectionOrder || sectionDefs.map(s => s.id) }); };
-  const moveSection = (idx, dir) => { const o = [...(data.sectionOrder || sectionDefs.map(s => s.id))]; const s = idx + dir; if (s < 0 || s >= o.length) return; [o[idx], o[s]] = [o[s], o[idx]]; update("sectionOrder", o); };
-  const moveBlock = (idx, dir) => { const b = [...data.customBlocks]; const s = idx + dir; if (s < 0 || s >= b.length) return; [b[idx], b[s]] = [b[s], b[idx]]; update("customBlocks", b); };
-  const copyHTML = () => { navigator.clipboard.writeText(generateHTML(data)); setCopied(true); setTimeout(() => setCopied(false), 2000); };
-  const copyOutlook = () => {
-    const html = generateOutlookHTML(data);
-    const blob = new Blob([html], { type: "text/html" });
-    const plain = new Blob([html], { type: "text/plain" });
-    navigator.clipboard.write([new ClipboardItem({ "text/html": blob, "text/plain": plain })]).then(() => {
-      setOutlookCopied(true); setTimeout(() => setOutlookCopied(false), 2000);
-    });
-  };
-
-  const tabStyle = t => ({
-    padding: "10px 20px", border: "none",
-    borderBottom: activeTab === t ? `3px solid ${BSA.red}` : "3px solid transparent",
-    background: "none", fontFamily: "'Trebuchet MS', Arial, sans-serif", fontSize: "13px",
-    fontWeight: activeTab === t ? "bold" : "normal", color: activeTab === t ? BSA.blue : BSA.paleGray,
-    cursor: "pointer", transition: "all 0.2s", whiteSpace: "nowrap",
-  });
-
-  const order = data.sectionOrder || sectionDefs.map(s => s.id);
-
-  const sectionEditors = {
-    opening: (
-      <Card key="opening">
-        <SectionLabel>Event Details & Opening</SectionLabel>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
-          <div><FieldLabel>Event Name</FieldLabel><Input value={data.eventName} onChange={v => update("eventName", v)} placeholder="e.g., OARS, Labor Day Camp" /></div>
-          <div><FieldLabel>Location</FieldLabel><Input value={data.location} onChange={v => update("location", v)} placeholder="e.g., Camp Hi-Sierra" /></div>
+    <a href="pre-event.html" class="card">
+      <div class="card-accent pre"></div>
+      <div class="card-body">
+        <div class="card-icon">📨</div>
+        <div class="card-title">Pre-Event Email Builder</div>
+        <div class="card-desc">
+          Create preparation emails for upcoming events. Includes event details, packing lists, schedules, CampDoc health forms, and registration links.
         </div>
-        <div style={{ marginBottom: "12px" }}><FieldLabel>Greeting</FieldLabel><Input value={data.greeting} onChange={v => update("greeting", v)} placeholder="Hello Folks," /></div>
-        <div><FieldLabel>Opening Message · use {"{eventName}"} and {"{location}"} as tokens</FieldLabel><Input value={data.openingMessage} onChange={v => update("openingMessage", v)} multiline placeholder="Thank you for coming out to our..." /></div>
-      </Card>
-    ),
-    thanks: (
-      <Card key="thanks"><SectionLabel>Special Thanks / Shoutouts</SectionLabel><FieldLabel>Leave blank to skip</FieldLabel><Input value={data.specialThanks} onChange={v => update("specialThanks", v)} multiline placeholder="Special thanks go out to..." /></Card>
-    ),
-    photo: (
-      <Card key="photo">
-        <SectionLabel>Photo / Video Request</SectionLabel>
-        <Toggle checked={data.photoAsk} onChange={v => update("photoAsk", v)} label="Include photo request" />
-        {data.photoAsk && <div style={{ display: "grid", gap: "10px", marginTop: "12px" }}>
-          <Input value={data.photoMessage} onChange={v => update("photoMessage", v)} multiline placeholder="Please share your photos..." />
-          <div><FieldLabel>Photo Album Link</FieldLabel><Input value={data.photoLink} onChange={v => update("photoLink", v)} placeholder="https://photos.app.goo.gl/..." /></div>
-        </div>}
-      </Card>
-    ),
-    survey: (
-      <Card key="survey">
-        <SectionLabel>Survey / Feedback</SectionLabel>
-        <Toggle checked={data.surveyAsk} onChange={v => update("surveyAsk", v)} label="Include survey request" />
-        {data.surveyAsk && <div style={{ display: "grid", gap: "10px", marginTop: "12px" }}>
-          <Input value={data.surveyMessage} onChange={v => update("surveyMessage", v)} multiline placeholder="Please share your feedback..." />
-          <div><FieldLabel>Survey Link</FieldLabel><Input value={data.surveyLink} onChange={v => update("surveyLink", v)} placeholder="https://..." /></div>
-        </div>}
-      </Card>
-    ),
-    custom: (
-      <Card key="custom">
-        <SectionLabel>Custom Content Blocks</SectionLabel>
-        <p style={{ fontSize: "12px", color: BSA.paleGray, margin: "0 0 12px", lineHeight: "1.5", fontFamily: "Arial, sans-serif" }}>Patches, lost & found, announcements, logistics — anything unique to your event.</p>
-        {data.customBlocks.map((block, i) => (
-          <CustomBlockCard key={i} block={block} index={i}
-            onUpdate={b => { const blocks = [...data.customBlocks]; blocks[i] = b; update("customBlocks", blocks); }}
-            onRemove={() => update("customBlocks", data.customBlocks.filter((_, j) => j !== i))}
-            onMoveUp={() => moveBlock(i, -1)} onMoveDown={() => moveBlock(i, 1)}
-            isFirst={i === 0} isLast={i === data.customBlocks.length - 1}
-          />
-        ))}
-        <Btn variant="ghost" onClick={() => update("customBlocks", [...data.customBlocks, { title: "", content: "", style: "info" }])} style={{ width: "100%" }}>+ Add Content Block</Btn>
-      </Card>
-    ),
-    events: (
-      <Card key="events">
-        <SectionLabel>Upcoming Events</SectionLabel>
-        <Toggle checked={data.showEvents} onChange={v => update("showEvents", v)} label="Include events section" />
-        {data.showEvents && <div style={{ marginTop: "12px" }}>
-          <div style={{ marginBottom: "12px" }}><FieldLabel>Transition Line</FieldLabel><Input value={data.eventsTransition} onChange={v => update("eventsTransition", v)} multiline /></div>
-          {data.events.map((event, i) => (
-            <EventCard key={i} event={event} index={i}
-              onUpdate={e => { const evts = [...data.events]; evts[i] = e; update("events", evts); }}
-              onRemove={() => update("events", data.events.filter((_, j) => j !== i))}
-            />
-          ))}
-          <Btn variant="ghost" onClick={() => update("events", [...data.events, { name: "", audience: "", description: "", link: "" }])} style={{ width: "100%" }}>+ Add Event</Btn>
-          <div style={{ background: BSA.lightTan, borderRadius: "4px", padding: "10px 14px", marginTop: "12px", display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontFamily: "Arial, sans-serif", fontSize: "11px", color: BSA.warmGray, lineHeight: "1.4" }}>🏕️ Reference upcoming camp weekend events</span>
-            <a href="https://scoutingevent.com/055/Calendar/3/Embed?filter-location[]=6496&filter-location[]=6497&filter-preset[]=472" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", background: BSA.blue, color: "#fff", textDecoration: "none", padding: "6px 14px", borderRadius: "4px", fontFamily: "'Trebuchet MS', Arial, sans-serif", fontSize: "11px", fontWeight: "bold", whiteSpace: "nowrap" }}>Open Calendar ↗</a>
-          </div>
-        </div>}
-      </Card>
-    ),
-    training: (
-      <Card key="training">
-        <SectionLabel>Training</SectionLabel>
-        <Toggle checked={data.showTraining} onChange={v => update("showTraining", v)} label="Include training section" />
-        {data.showTraining && <div style={{ display: "grid", gap: "10px", marginTop: "12px" }}>
-          <div><FieldLabel>Message</FieldLabel><Input value={data.trainingMessage} onChange={v => update("trainingMessage", v)} multiline /></div>
-          <div><FieldLabel>Calendar Page Link</FieldLabel><Input value={data.trainingLink} onChange={v => update("trainingLink", v)} placeholder="https://svmbc.org/training/" /></div>
-          <div style={{ borderTop: `1px solid ${BSA.tan}`, paddingTop: "10px" }}>
-            <FieldLabel>Training Events</FieldLabel>
-            {data.trainings.map((t, i) => (
-              <div key={i} style={{ background: BSA.lightTan, borderRadius: "4px", padding: "12px", marginBottom: "8px", position: "relative" }}>
-                <button onClick={() => update("trainings", data.trainings.filter((_, j) => j !== i))} style={{ position: "absolute", top: "8px", right: "8px", background: "none", border: "none", cursor: "pointer", color: BSA.warmGray, fontSize: "16px", lineHeight: "1" }} title="Remove">✕</button>
-                <div style={{ display: "grid", gap: "8px" }}>
-                  <Input value={t.name} onChange={v => { const arr = [...data.trainings]; arr[i] = { ...arr[i], name: v }; update("trainings", arr); }} placeholder="Training name (e.g. IOLS)" />
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                    <Input value={t.date} onChange={v => { const arr = [...data.trainings]; arr[i] = { ...arr[i], date: v }; update("trainings", arr); }} placeholder="Date (e.g. Mar 15, 2026)" />
-                    <Input value={t.link} onChange={v => { const arr = [...data.trainings]; arr[i] = { ...arr[i], link: v }; update("trainings", arr); }} placeholder="Registration link" />
-                  </div>
-                  <Input value={t.description} onChange={v => { const arr = [...data.trainings]; arr[i] = { ...arr[i], description: v }; update("trainings", arr); }} placeholder="Brief description (optional)" />
-                </div>
-              </div>
-            ))}
-            <Btn variant="ghost" onClick={() => update("trainings", [...data.trainings, { name: "", date: "", description: "", link: "" }])} style={{ width: "100%" }}>+ Add Training</Btn>
-          </div>
-          <div style={{ background: BSA.lightTan, borderRadius: "4px", padding: "10px 14px", display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontFamily: "Arial, sans-serif", fontSize: "11px", color: BSA.warmGray, lineHeight: "1.4" }}>📋 Reference upcoming dates on the training calendar</span>
-            <a href="https://scoutingevent.com/055/Calendar/3/Embed?filter-preset[]=470" target="_blank" rel="noopener noreferrer" style={{ display: "inline-block", background: BSA.blue, color: "#fff", textDecoration: "none", padding: "6px 14px", borderRadius: "4px", fontFamily: "'Trebuchet MS', Arial, sans-serif", fontSize: "11px", fontWeight: "bold", whiteSpace: "nowrap" }}>Open Calendar ↗</a>
-          </div>
-        </div>}
-      </Card>
-    ),
-    reservation: (
-      <Card key="reservation">
-        <SectionLabel>Reservation CTA</SectionLabel>
-        <Toggle checked={data.showReservation} onChange={v => update("showReservation", v)} label="Include reservation" />
-        {data.showReservation && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "12px" }}>
-          <div><FieldLabel>Year</FieldLabel><Input value={data.reservationYear} onChange={v => update("reservationYear", v)} /></div>
-          <div><FieldLabel>Location</FieldLabel><Input value={data.reservationLocation} onChange={v => update("reservationLocation", v)} /></div>
-          <div style={{ gridColumn: "span 2" }}><FieldLabel>Link</FieldLabel><Input value={data.reservationLink} onChange={v => update("reservationLink", v)} /></div>
-          <div style={{ gridColumn: "span 2" }}><FieldLabel>Message</FieldLabel><Input value={data.reservationMessage} onChange={v => update("reservationMessage", v)} multiline /></div>
-        </div>}
-      </Card>
-    ),
-  };
-
-  return (
-    <div style={{ minHeight: "100vh", background: BSA.lightTan, fontFamily: "Arial, Helvetica, sans-serif", padding: "24px 16px" }}>
-
-      {/* Header */}
-      <div style={{ maxWidth: "1100px", margin: "0 auto 20px", textAlign: "center" }}>
-        <div style={{ display: "inline-block", background: BSA.blue, color: "#fff", fontFamily: "'Trebuchet MS', Arial, sans-serif", fontSize: "11px", letterSpacing: "2px", textTransform: "uppercase", padding: "6px 16px", borderRadius: "2px", marginBottom: "12px", fontWeight: "bold" }}>
-          SVMBC · HUBSPOT EMAIL BUILDER
+        <div class="card-tags">
+          <span class="tag">CHS Event</span>
+          <span class="tag">CSR Event</span>
+          <span class="tag">Day Event</span>
+          <span class="tag">Training</span>
         </div>
-        <h1 style={{ fontFamily: "'Trebuchet MS', Arial, sans-serif", fontSize: "28px", color: BSA.blue, margin: "0 0 4px", fontWeight: "bold" }}>
-          Post-Event Follow-Up Template
-        </h1>
-        <div style={{ width: "60px", height: "4px", background: BSA.red, margin: "8px auto 12px" }} />
-        <p style={{ color: BSA.warmGray, fontSize: "14px", margin: "0 0 16px", fontFamily: "Arial, sans-serif" }}>
-          BSA brand-compliant email builder · Trebuchet MS + Arial · Official color palette
-        </p>
-        <div style={{ display: "flex", justifyContent: "center", gap: "8px", flexWrap: "wrap" }}>
-          {Object.entries(presets).map(([key, p]) => (
-            <Btn key={key} variant="ghost" onClick={() => loadPreset(key)} style={{ fontSize: "12px", padding: "6px 14px" }}>{p.label}</Btn>
-          ))}
+        <div class="card-cta">
+          Open Builder
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
       </div>
+    </a>
 
-      {/* Tabs */}
-      <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", borderBottom: `2px solid ${BSA.tan}`, marginBottom: "20px", overflowX: "auto" }}>
-        <button style={tabStyle("edit")} onClick={() => setActiveTab("edit")}>Edit</button>
-        <button style={tabStyle("brand")} onClick={() => setActiveTab("brand")}>Brand</button>
-        <button style={tabStyle("order")} onClick={() => setActiveTab("order")}>Order</button>
-        <button style={tabStyle("preview")} onClick={() => setActiveTab("preview")}>Preview</button>
-        <button style={tabStyle("code")} onClick={() => setActiveTab("code")}>Output</button>
-        <div style={{ flex: 1 }} />
-        <button style={tabStyle("tips")} onClick={() => setActiveTab("tips")}>Tips</button>
+    <a href="post-event.html" class="card">
+      <div class="card-accent post"></div>
+      <div class="card-body">
+        <div class="card-icon">📬</div>
+        <div class="card-title">Post-Event Follow-Up Builder</div>
+        <div class="card-desc">
+          Create follow-up emails after events. Includes thank-you messages, photo galleries, survey links, upcoming events, and feedback requests.
+        </div>
+        <div class="card-tags">
+          <span class="tag">Follow-Up</span>
+          <span class="tag">Thank You</span>
+          <span class="tag">Survey</span>
+          <span class="tag">Photos</span>
+        </div>
+        <div class="card-cta">
+          Open Builder
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
       </div>
+    </a>
 
-      <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
+  </div>
+</div>
 
-        {activeTab === "edit" && (
-          <div style={{ display: "grid", gap: "16px" }}>
-            {order.map(id => sectionEditors[id])}
-            <Card>
-              <SectionLabel>Closing & Signature</SectionLabel>
-              <div style={{ marginBottom: "12px" }}><FieldLabel>Closing Line</FieldLabel><Input value={data.closingLine} onChange={v => update("closingLine", v)} placeholder="We hope to see you again!" /></div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <div><FieldLabel>Name</FieldLabel><Input value={data.senderName} onChange={v => update("senderName", v)} placeholder="Amanda Shaw" /></div>
-                <div><FieldLabel>Title</FieldLabel><Input value={data.senderTitle} onChange={v => update("senderTitle", v)} placeholder="Marketing Executive" /></div>
-                <div><FieldLabel>Email</FieldLabel><Input value={data.senderEmail} onChange={v => update("senderEmail", v)} placeholder="Amanda.Shaw@scouting.org" /></div>
-                <div><FieldLabel>Phone</FieldLabel><Input value={data.senderPhone} onChange={v => update("senderPhone", v)} placeholder="408-638-8323" /></div>
-              </div>
-              <div style={{ borderTop: `1px solid ${BSA.tan}`, paddingTop: "12px", marginTop: "12px" }}>
-                <FieldLabel>Signature Options</FieldLabel>
-                <Toggle checked={data.sigShowLogo} onChange={v => update("sigShowLogo", v)} label="Show SVMBC logo image (uncheck for reply/mobile style)" />
-                {data.sigShowLogo && <div style={{ marginTop: "8px" }}><FieldLabel>Logo Image URL</FieldLabel><Input value={data.sigLogoUrl} onChange={v => update("sigLogoUrl", v)} placeholder="https://svmbc.org/wp-content/uploads/..." /></div>}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "8px" }}>
-                  <div><FieldLabel>Newsletter Link</FieldLabel><Input value={data.sigNewsletterLink} onChange={v => update("sigNewsletterLink", v)} placeholder="https://svmbc.org/newsletter/" /></div>
-                  <div><FieldLabel>Facebook Link</FieldLabel><Input value={data.sigFacebookLink} onChange={v => update("sigFacebookLink", v)} placeholder="https://facebook.com/SVMBC" /></div>
-                </div>
-              </div>
-              <div style={{ background: BSA.lightTan, borderRadius: "4px", padding: "10px 14px", marginTop: "12px" }}>
-                <p style={{ margin: "0", fontFamily: "Arial, sans-serif", fontSize: "11px", color: BSA.warmGray, lineHeight: "1.5" }}>
-                  ✉️ <strong>HubSpot HTML</strong> uses logo image + full addresses + links. <strong>Outlook Paste</strong> uses text-only "Scouting America / SVMBC" for better reply thread compatibility.
-                </p>
-              </div>
-            </Card>
-          </div>
-        )}
+<div class="footer">
+  SVMBC Email Builders &middot; <a href="https://svmbc.org">svmbc.org</a> &middot; Silicon Valley Monterey Bay Council, Scouting America
+</div>
 
-        {activeTab === "brand" && (
-          <div style={{ display: "grid", gap: "16px" }}>
-            <Card>
-              <SectionLabel>Brand Color Palette</SectionLabel>
-              <p style={{ fontSize: "13px", color: BSA.warmGray, margin: "0 0 16px", lineHeight: "1.5" }}>Select the accent palette based on your event's target audience. Per BSA guidelines (310-0231), each sub-brand has its own color scheme.</p>
-              <div style={{ display: "grid", gap: "8px" }}>
-                {Object.entries(accentMap).map(([key, a]) => (
-                  <label key={key} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", background: data.brandAccent === key ? BSA.lightTan : "#fff", border: `2px solid ${data.brandAccent === key ? BSA.blue : BSA.tan}`, borderRadius: "4px", cursor: "pointer", transition: "all 0.2s" }}
-                    onClick={() => update("brandAccent", key)}>
-                    <div style={{ width: "24px", height: "24px", borderRadius: "50%", background: a.headerBg, border: "2px solid #fff", boxShadow: "0 1px 3px rgba(0,0,0,0.15)", flexShrink: 0 }} />
-                    <div style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-                      <div style={{ width: "16px", height: "16px", borderRadius: "2px", background: a.primary }} />
-                      <div style={{ width: "16px", height: "16px", borderRadius: "2px", background: a.cta }} />
-                    </div>
-                    <span style={{ fontFamily: "'Trebuchet MS', sans-serif", fontSize: "14px", color: BSA.darkGray, fontWeight: data.brandAccent === key ? "bold" : "normal" }}>{a.label}</span>
-                  </label>
-                ))}
-              </div>
-            </Card>
-            <Card>
-              <SectionLabel>BSA Brand Reference</SectionLabel>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px", marginBottom: "16px" }}>
-                {[
-                  { name: "Scouting Blue", hex: BSA.blue },
-                  { name: "Scouting Red", hex: BSA.red },
-                  { name: "Scouting Tan", hex: BSA.tan },
-                  { name: "Warm Gray", hex: BSA.warmGray },
-                  { name: "Dark Gray", hex: BSA.darkGray },
-                ].map(c => (
-                  <div key={c.hex} style={{ textAlign: "center" }}>
-                    <div style={{ width: "100%", paddingTop: "100%", borderRadius: "4px", background: c.hex, border: "1px solid rgba(0,0,0,0.1)" }} />
-                    <div style={{ fontSize: "10px", color: BSA.warmGray, marginTop: "4px", fontFamily: "Arial, sans-serif" }}>{c.name}</div>
-                    <div style={{ fontSize: "10px", color: BSA.paleGray, fontFamily: "monospace" }}>{c.hex}</div>
-                  </div>
-                ))}
-              </div>
-              <p style={{ fontSize: "12px", color: BSA.paleGray, margin: 0, lineHeight: "1.5" }}>
-                Fonts: Trebuchet MS (headings, bold), Arial (body text). Per BSA digital guidelines, these are the primary acceptable typefaces for email.
-              </p>
-            </Card>
-          </div>
-        )}
-
-        {activeTab === "order" && (
-          <Card>
-            <SectionLabel>Section Order</SectionLabel>
-            <p style={{ fontSize: "13px", color: BSA.warmGray, margin: "0 0 16px", lineHeight: "1.5" }}>Reorder sections. Header greeting and closing/signature always stay at top and bottom.</p>
-            {order.map((id, idx) => {
-              const def = sectionDefs.find(s => s.id === id);
-              return (
-                <div key={id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", background: "#fff", border: `1px solid ${BSA.tan}`, borderRadius: "4px", marginBottom: "8px" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                    <button onClick={() => moveSection(idx, -1)} disabled={idx === 0} style={{ background: "none", border: `1px solid ${BSA.tan}`, borderRadius: "2px", cursor: idx === 0 ? "default" : "pointer", opacity: idx === 0 ? 0.3 : 1, fontSize: "11px", padding: "1px 6px" }}>↑</button>
-                    <button onClick={() => moveSection(idx, 1)} disabled={idx === order.length - 1} style={{ background: "none", border: `1px solid ${BSA.tan}`, borderRadius: "2px", cursor: idx === order.length - 1 ? "default" : "pointer", opacity: idx === order.length - 1 ? 0.3 : 1, fontSize: "11px", padding: "1px 6px" }}>↓</button>
-                  </div>
-                  <span style={{ fontFamily: "'Trebuchet MS', sans-serif", fontSize: "11px", color: BSA.blue, width: "20px", fontWeight: "bold" }}>{idx + 1}.</span>
-                  <span style={{ fontSize: "14px", color: BSA.darkGray }}>{def?.label || id}</span>
-                </div>
-              );
-            })}
-          </Card>
-        )}
-
-        {activeTab === "preview" && (
-          <div style={{ background: BSA.tan, borderRadius: "4px", padding: "32px 16px", display: "flex", justifyContent: "center" }}>
-            <div dangerouslySetInnerHTML={{ __html: generateHTML(data) }} style={{ width: "100%", maxWidth: "640px" }} />
-          </div>
-        )}
-
-        {activeTab === "code" && (
-          <div style={{ display: "grid", gap: "16px" }}>
-            <Card>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                <SectionLabel>HubSpot HTML</SectionLabel>
-                <Btn variant={copied ? "success" : "primary"} onClick={copyHTML}>{copied ? "✓ Copied!" : "Copy HTML"}</Btn>
-              </div>
-              <pre style={{ background: BSA.darkGray, color: BSA.tan, padding: "20px", borderRadius: "4px", fontSize: "11px", fontFamily: "monospace", overflow: "auto", maxHeight: "400px", lineHeight: "1.6", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                {generateHTML(data)}
-              </pre>
-              <div style={{ marginTop: "12px", padding: "12px 16px", background: BSA.lightTan, borderRadius: "4px", border: `1px solid ${BSA.tan}` }}>
-                <p style={{ margin: 0, fontSize: "13px", color: BSA.warmGray, lineHeight: "1.5" }}>
-                  <strong>HubSpot:</strong> Copy → Marketing → Email → Create → "Code Your Own" → Paste → Send. <strong>Reminder:</strong> Replace greeting with {"{{ contact.firstname }}"} for personalization.
-                </p>
-              </div>
-            </Card>
-            <Card>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <SectionLabel>Outlook / Gmail Paste</SectionLabel>
-                <Btn variant={outlookCopied ? "success" : "red"} onClick={copyOutlook}>{outlookCopied ? "✓ Copied!" : "Copy for Outlook"}</Btn>
-              </div>
-              <p style={{ margin: "0 0 12px", fontSize: "13px", color: BSA.warmGray, lineHeight: "1.6" }}>
-                Copies formatted content to your clipboard. Open a new email in Outlook or Gmail and paste (Ctrl+V). The styling, colors, and links will carry over as rich text — no HTML editing needed.
-              </p>
-              <div style={{ background: BSA.lightTan, border: `1px solid ${BSA.tan}`, borderRadius: "4px", padding: "20px", maxHeight: "400px", overflow: "auto" }}>
-                <div dangerouslySetInnerHTML={{ __html: generateOutlookHTML(data) }} />
-              </div>
-            </Card>
-          </div>
-        )}
-
-        {activeTab === "tips" && (
-          <div style={{ display: "grid", gap: "16px" }}>
-            {[
-              { title: "BSA Brand Compliance", content: "This template uses official BSA colors (#003F87 Blue, #CE1126 Red, #D6CEBD Tan), approved digital fonts (Trebuchet MS for headings, Arial for body), and the red accent stripe (diagonal element) — all per BSA Brand Guidelines document 310-0231." },
-              { title: "Sub-Brand Colors", content: "Use the Brand tab to switch palettes: BSA Corporate (blue/red), Cub Scouting (blue/gold), Scouts BSA (olive/red), or Venturing (green/gold). The guideline states: if the project serves multiple sub-brands, use BSA Corporate." },
-              { title: "HubSpot Personalization", content: "After pasting, replace \"Hello Folks,\" with \"Hello {{ contact.firstname }},\" for personalization. Use {{ contact.company }} or any HubSpot property token." },
-              { title: "Outlook / Gmail Paste", content: "The \"Copy for Outlook\" button copies rich formatted HTML to your clipboard. Open a new email in Outlook or Gmail and Ctrl+V to paste. All BSA styling, colors, and links transfer as rich text — no code editing needed." },
-              { title: "Email Best Practices (BSA)", content: "Per BSA guidelines: set text in HTML not images, use clear CTA buttons in accent color, include ALT text on all images, identify sender clearly." },
-              { title: "Timing", content: "Send within 24-48hrs for best engagement. For events with surveys, send ASAP while memories are fresh." },
-            ].map((tip, i) => (
-              <Card key={i}>
-                <h3 style={{ margin: "0 0 8px", fontFamily: "'Trebuchet MS', sans-serif", fontSize: "15px", color: BSA.blue, fontWeight: "bold" }}>{tip.title}</h3>
-                <p style={{ margin: 0, fontSize: "13px", color: BSA.warmGray, lineHeight: "1.6" }}>{tip.content}</p>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById("root")).render(<PostEventTemplateBuilder />);
-</script>
 </body>
 </html>
