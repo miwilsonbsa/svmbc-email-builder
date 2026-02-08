@@ -81,7 +81,19 @@ const campdocBlock = {
 };
 
 const presets = {
-  blank: { label: "🆕 Blank", data: defaultData },
+  blank: { label: "🆕 Blank", data: {
+    ...defaultData,
+    showDetails: true,
+    detailItems: [{ title: "", content: "", link: "", linkText: "" }],
+    showPacking: true,
+    packingItems: [""],
+    showSchedule: true,
+    scheduleItems: [{ time: "", activity: "" }],
+    showLinks: true,
+    links: [{ url: "", label: "" }],
+    customBlocks: [{ title: "", content: "", style: "info" }],
+    showRegistration: true,
+  } },
   chsEvent: {
     label: "⛺ CHS Event",
     data: {
@@ -308,6 +320,16 @@ const sectionDefs = [
 ];
 
 /* ── HTML Generator ── */
+/* ── Helper: format custom block content (newlines → <br>, auto-link URLs/emails) ── */
+function formatBlockContent(text) {
+  if (!text) return "";
+  return text
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" style="color:#003F87;text-decoration:underline;">$1</a>')
+    .replace(/([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})/g, '<a href="mailto:$1" style="color:#003F87;text-decoration:underline;">$1</a>')
+    .replace(/\n/g, "<br>");
+}
+
 function generateHTML(data) {
   const accent = accentMap[data.brandAccent] || accentMap.blue;
   const resolve = t => (t || "").replace(/\{eventName\}/g, data.eventName).replace(/\{location\}/g, data.location).replace(/\{eventDates\}/g, data.eventDates);
@@ -316,7 +338,7 @@ function generateHTML(data) {
   const sectionHTML = {
     welcome: data.welcomeMessage ? `<tr><td style="padding:24px 40px 8px 40px;"><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;color:${BSA.darkGray};line-height:1.7;">${resolve(data.welcomeMessage)}</p></td></tr>` : "",
 
-    details: data.showDetails && data.detailItems.length > 0 ? `<tr><td style="padding:20px 40px 8px;"><table cellpadding="0" cellspacing="0" border="0" width="100%">${data.detailItems.filter(d => d.title).map((d, i) => `<tr><td style="padding:0 0 14px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${accent.primary};border-radius:0 4px 4px 0;padding:16px 20px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td><p style="margin:0 0 2px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};"><span style="color:${accent.primary};font-weight:bold;">${i + 1}.</span> ${d.title}</p><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${resolve(d.content)}</p>${d.link ? `<p style="margin:8px 0 0;"><a href="${d.link}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:8px 18px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;">${d.linkText || "Learn More"}</a></p>` : ""}</td></tr></table></td></tr></table></td></tr>`).join("\n")}</table></td></tr>` : "",
+    details: data.showDetails && data.detailItems.length > 0 ? `<tr><td style="padding:20px 40px 8px;"><table cellpadding="0" cellspacing="0" border="0" width="100%">${data.detailItems.filter(d => d.title).map((d, i) => `<tr><td style="padding:0 0 14px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${accent.primary};border-radius:0 4px 4px 0;padding:16px 20px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td><p style="margin:0 0 2px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};"><span style="color:${accent.primary};font-weight:bold;">${i + 1}.</span> ${d.title}</p><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${formatBlockContent(resolve(d.content))}</p>${d.link ? `<p style="margin:8px 0 0;"><a href="${d.link}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:8px 18px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;">${d.linkText || "Learn More"}</a></p>` : ""}</td></tr></table></td></tr></table></td></tr>`).join("\n")}</table></td></tr>` : "",
 
     packing: data.showPacking && data.packingItems.length > 0 ? `<tr><td style="padding:16px 40px 8px;"><h2 style="margin:0 0 8px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:18px;color:${accent.primary};font-weight:bold;">What to Bring</h2><p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.packingIntro)}</p><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-radius:4px;padding:16px 20px;">${data.packingItems.filter(p => p).map(p => `<p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.5;">&#9745; ${p}</p>`).join("\n")}</td></tr></table></td></tr>` : "",
 
@@ -324,7 +346,7 @@ function generateHTML(data) {
 
     links: data.showLinks && data.links.length > 0 ? `<tr><td style="padding:16px 40px 8px;"><h2 style="margin:0 0 8px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:18px;color:${accent.primary};font-weight:bold;">Important Links</h2><p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.linksIntro)}</p><table cellpadding="0" cellspacing="0" border="0" width="100%">${data.links.filter(l => l.label).map(l => `<tr><td style="padding:0 0 8px;"><a href="${l.url || "#"}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:10px 24px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">${l.label}</a></td></tr>`).join("\n")}</table></td></tr>` : "",
 
-    custom: data.customBlocks.length > 0 ? data.customBlocks.map(b => `<tr><td style="padding:8px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};border-radius:0 4px 4px 0;padding:16px 20px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${resolve(b.content)}</p></td></tr></table></td></tr>`).join("\n") : "",
+    custom: data.customBlocks.length > 0 ? data.customBlocks.map(b => `<tr><td style="padding:8px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};border-radius:0 4px 4px 0;padding:16px 20px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${formatBlockContent(resolve(b.content))}</p></td></tr></table></td></tr>`).join("\n") : "",
 
     registration: data.showRegistration ? `<tr><td style="padding:16px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${accent.primary};border-radius:4px;padding:24px;text-align:center;"><p style="margin:0 0 12px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:18px;color:#fff;font-weight:bold;">${resolve(data.registrationMessage)}</p>${data.registrationLink ? `<a href="${data.registrationLink}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:12px 32px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:14px;font-weight:bold;">${data.registrationButtonText || "Register Now"}</a>` : ""}</td></tr></table></td></tr>` : "",
   };
@@ -400,7 +422,7 @@ function generateOutlookHTML(data) {
     }
     if (id === "details" && data.showDetails && data.detailItems.length > 0) {
       data.detailItems.filter(d => d.title).forEach((d, i) => {
-        parts.push(`<div style="background:${BSA.lightTan};border-left:4px solid ${accent.primary};padding:14px 18px;margin:0 0 12px;"><p style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};"><span style="color:${accent.primary};font-weight:bold;">${i + 1}.</span> ${d.title}</p><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${resolve(d.content)}</p>${d.link ? `<p style="margin:8px 0 0;"><a href="${d.link}" style="color:${accent.cta};font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;">${d.linkText || "Learn More"} →</a></p>` : ""}</div>`);
+        parts.push(`<div style="background:${BSA.lightTan};border-left:4px solid ${accent.primary};padding:14px 18px;margin:0 0 12px;"><p style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};"><span style="color:${accent.primary};font-weight:bold;">${i + 1}.</span> ${d.title}</p><p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${formatBlockContent(resolve(d.content))}</p>${d.link ? `<p style="margin:8px 0 0;"><a href="${d.link}" style="color:${accent.cta};font-family:'Trebuchet MS',Arial,sans-serif;font-size:12px;font-weight:bold;">${d.linkText || "Learn More"} →</a></p>` : ""}</div>`);
       });
     }
     if (id === "packing" && data.showPacking && data.packingItems.length > 0) {
@@ -424,7 +446,7 @@ function generateOutlookHTML(data) {
     }
     if (id === "custom" && data.customBlocks.length > 0) {
       data.customBlocks.forEach(b => {
-        parts.push(`<div style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};padding:14px 18px;margin:0 0 12px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${resolve(b.content)}</p></div>`);
+        parts.push(`<div style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};padding:14px 18px;margin:0 0 12px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${formatBlockContent(resolve(b.content))}</p></div>`);
       });
     }
     if (id === "registration" && data.showRegistration) {
