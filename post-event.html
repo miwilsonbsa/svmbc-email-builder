@@ -192,6 +192,17 @@ const CustomBlockCard = ({ block, index, onUpdate, onRemove, onMoveUp, onMoveDow
             {styleOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>
+        <div>
+          <FieldLabel>Buttons (optional)</FieldLabel>
+          {(block.buttons || []).map((btn, bi) => (
+            <div key={bi} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "6px", marginBottom: "6px" }}>
+              <Input value={btn.label} onChange={v => { const btns = [...(block.buttons || [])]; btns[bi] = { ...btns[bi], label: v }; onUpdate({ ...block, buttons: btns }); }} placeholder="Button label" />
+              <Input value={btn.url} onChange={v => { const btns = [...(block.buttons || [])]; btns[bi] = { ...btns[bi], url: v }; onUpdate({ ...block, buttons: btns }); }} placeholder="URL or mailto:..." />
+              <Btn variant="danger" onClick={() => { const btns = (block.buttons || []).filter((_, j) => j !== bi); onUpdate({ ...block, buttons: btns }); }} style={{ padding: "4px 8px", fontSize: "11px" }}>✕</Btn>
+            </div>
+          ))}
+          <Btn variant="ghost" onClick={() => onUpdate({ ...block, buttons: [...(block.buttons || []), { label: "", url: "" }] })} style={{ width: "100%", fontSize: "12px", padding: "4px" }}>+ Add Button</Btn>
+        </div>
       </div>
     </div>
   );
@@ -229,6 +240,14 @@ function formatBlockContent(text) {
   return s;
 }
 
+function renderBlockButtons(buttons, accent, mode) {
+  if (!buttons || !buttons.length) return "";
+  if (mode === "hubspot") {
+    return `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:12px;"><tr>${buttons.map(btn => `<td style="padding-right:10px;"><a href="${btn.url}" style="display:inline-block;background:${accent};color:#fff;text-decoration:none;padding:10px 20px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">${btn.label}</a></td>`).join("")}</tr></table>`;
+  }
+  return buttons.map(btn => `<p style="margin:6px 0 0;"><a href="${btn.url}" style="display:inline-block;background:${accent};color:#fff;text-decoration:none;padding:8px 18px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">${btn.label}</a></p>`).join("");
+}
+
 /* ── HTML Generator with BSA Brand Compliance ── */
 function generateHTML(data) {
   const accent = accentMap[data.brandAccent] || accentMap.blue;
@@ -245,7 +264,7 @@ function generateHTML(data) {
 
     survey: data.surveyAsk ? `<tr><td style="padding:12px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${accent.primary};border-radius:0 4px 4px 0;padding:16px 20px;"><p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.5;">${formatBlockContent(resolve(data.surveyMessage))}</p>${data.surveyLink ? `<a href="${data.surveyLink}" style="display:inline-block;background:${accent.primary};color:#fff;text-decoration:none;padding:10px 24px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">Take the Survey</a>` : ""}</td></tr></table></td></tr>` : "",
 
-    custom: data.customBlocks.length > 0 ? data.customBlocks.map(b => `<tr><td style="padding:8px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};border-radius:0 4px 4px 0;padding:16px 20px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${formatBlockContent(resolve(b.content))}</p></td></tr></table></td></tr>`).join("\n") : "",
+    custom: data.customBlocks.length > 0 ? data.customBlocks.map(b => `<tr><td style="padding:8px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};border-radius:0 4px 4px 0;padding:16px 20px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${formatBlockContent(resolve(b.content))}</p>${renderBlockButtons(b.buttons, accent.cta, "hubspot")}</td></tr></table></td></tr>`).join("\n") : "",
 
     events: data.showEvents && data.events.length > 0 ? `<tr><td style="padding:24px 40px 8px;"><h2 style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:20px;color:${accent.primary};font-weight:bold;">Upcoming Events</h2><p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.5;">${resolve(data.eventsTransition)}</p></td></tr><tr><td style="padding:0 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%">${data.events.filter(e => e.name).map((e, i) => `<tr><td style="padding:0 0 12px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-radius:4px;padding:16px;"><p style="margin:0 0 4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:16px;font-weight:bold;color:${BSA.darkGray};">${i + 1}. ${e.name}</p>${e.audience ? `<p style="margin:0 0 8px;font-family:Arial,sans-serif;font-size:11px;color:${accent.primary};text-transform:uppercase;letter-spacing:1px;font-weight:bold;">${e.audience}</p>` : ""}<p style="margin:0 0 12px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.5;">${formatBlockContent(e.description)}</p>${e.link ? `<a href="${e.link}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:10px 24px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">Learn More &amp; Register</a>` : ""}</td></tr></table></td></tr>`).join("\n")}</table></td></tr>` : "",
 
@@ -358,7 +377,7 @@ function generateOutlookHTML(data) {
     }
     if (id === "custom" && data.customBlocks.length > 0) {
       data.customBlocks.forEach(b => {
-        parts.push(`<div style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};padding:14px 18px;margin:0 0 12px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${formatBlockContent(resolve(b.content))}</p></div>`);
+        parts.push(`<div style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};padding:14px 18px;margin:0 0 12px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${formatBlockContent(resolve(b.content))}</p>${renderBlockButtons(b.buttons, accent.cta, "outlook")}</div>`);
       });
     }
     if (id === "events" && data.showEvents && data.events.length > 0) {
@@ -483,7 +502,7 @@ function PostEventTemplateBuilder() {
             isFirst={i === 0} isLast={i === data.customBlocks.length - 1}
           />
         ))}
-        <Btn variant="ghost" onClick={() => update("customBlocks", [...data.customBlocks, { title: "", content: "", style: "info" }])} style={{ width: "100%" }}>+ Add Content Block</Btn>
+        <Btn variant="ghost" onClick={() => update("customBlocks", [...data.customBlocks, { title: "", content: "", style: "info", buttons: [] }])} style={{ width: "100%" }}>+ Add Content Block</Btn>
       </Card>
     ),
     events: (

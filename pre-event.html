@@ -77,7 +77,11 @@ const accentMap = {
 
 const campdocBlock = {
   title: "📋 CampDoc Health Forms",
-  content: "BSA Annual Health and Medical Record Parts A and B are required for all participants. New in 2026, each participant will complete Parts A and B forms via CampDoc at least 2 weeks before your session. Enter all medications and document any allergies.\n\nAccess CampDoc: https://app.campdoc.com/!/dn/login\nCampDoc Help: CampDoc@svmbc.org",
+  content: "BSA Annual Health and Medical Record Parts A and B are required for all participants. New in 2026, each participant will complete Parts A and B forms via CampDoc at least 2 weeks before your session. Enter all medications and document any allergies.",
+  buttons: [
+    { label: "Access CampDoc Portal", url: "https://app.campdoc.com/!/dn/login" },
+    { label: "Email CampDoc Help", url: "mailto:CampDoc@svmbc.org" },
+  ],
 };
 
 const presets = {
@@ -91,7 +95,7 @@ const presets = {
     scheduleItems: [{ time: "", activity: "" }],
     showLinks: true,
     links: [{ url: "", label: "" }],
-    customBlocks: [{ title: "", content: "", style: "info" }],
+    customBlocks: [{ title: "", content: "", style: "info", buttons: [] }],
     showRegistration: true,
   } },
   chsEvent: {
@@ -304,6 +308,17 @@ const CustomBlockCard = ({ block, index, onUpdate, onRemove, onMoveUp, onMoveDow
             {styleOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
           </select>
         </div>
+        <div>
+          <FieldLabel>Buttons (optional)</FieldLabel>
+          {(block.buttons || []).map((btn, bi) => (
+            <div key={bi} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "6px", marginBottom: "6px" }}>
+              <Input value={btn.label} onChange={v => { const btns = [...(block.buttons || [])]; btns[bi] = { ...btns[bi], label: v }; onUpdate({ ...block, buttons: btns }); }} placeholder="Button label" />
+              <Input value={btn.url} onChange={v => { const btns = [...(block.buttons || [])]; btns[bi] = { ...btns[bi], url: v }; onUpdate({ ...block, buttons: btns }); }} placeholder="URL or mailto:..." />
+              <Btn variant="danger" onClick={() => { const btns = (block.buttons || []).filter((_, j) => j !== bi); onUpdate({ ...block, buttons: btns }); }} style={{ padding: "4px 8px", fontSize: "11px" }}>✕</Btn>
+            </div>
+          ))}
+          <Btn variant="ghost" onClick={() => onUpdate({ ...block, buttons: [...(block.buttons || []), { label: "", url: "" }] })} style={{ width: "100%", fontSize: "12px", padding: "4px" }}>+ Add Button</Btn>
+        </div>
       </div>
     </div>
   );
@@ -330,6 +345,14 @@ function formatBlockContent(text) {
     .replace(/\n/g, "<br>");
 }
 
+function renderBlockButtons(buttons, accent, mode) {
+  if (!buttons || !buttons.length) return "";
+  if (mode === "hubspot") {
+    return `<table cellpadding="0" cellspacing="0" border="0" style="margin-top:12px;"><tr>${buttons.map(btn => `<td style="padding-right:10px;"><a href="${btn.url}" style="display:inline-block;background:${accent};color:#fff;text-decoration:none;padding:10px 20px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">${btn.label}</a></td>`).join("")}</tr></table>`;
+  }
+  return buttons.map(btn => `<p style="margin:6px 0 0;"><a href="${btn.url}" style="display:inline-block;background:${accent};color:#fff;text-decoration:none;padding:8px 18px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">${btn.label}</a></p>`).join("");
+}
+
 function generateHTML(data) {
   const accent = accentMap[data.brandAccent] || accentMap.blue;
   const resolve = t => (t || "").replace(/\{eventName\}/g, data.eventName).replace(/\{location\}/g, data.location).replace(/\{eventDates\}/g, data.eventDates);
@@ -346,7 +369,7 @@ function generateHTML(data) {
 
     links: data.showLinks && data.links.length > 0 ? `<tr><td style="padding:16px 40px 8px;"><h2 style="margin:0 0 8px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:18px;color:${accent.primary};font-weight:bold;">Important Links</h2><p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.darkGray};line-height:1.6;">${resolve(data.linksIntro)}</p><table cellpadding="0" cellspacing="0" border="0" width="100%">${data.links.filter(l => l.label).map(l => `<tr><td style="padding:0 0 8px;"><a href="${l.url || "#"}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:10px 24px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:13px;font-weight:bold;">${l.label}</a></td></tr>`).join("\n")}</table></td></tr>` : "",
 
-    custom: data.customBlocks.length > 0 ? data.customBlocks.map(b => `<tr><td style="padding:8px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};border-radius:0 4px 4px 0;padding:16px 20px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${formatBlockContent(resolve(b.content))}</p></td></tr></table></td></tr>`).join("\n") : "",
+    custom: data.customBlocks.length > 0 ? data.customBlocks.map(b => `<tr><td style="padding:8px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};border-radius:0 4px 4px 0;padding:16px 20px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${formatBlockContent(resolve(b.content))}</p>${renderBlockButtons(b.buttons, accent.cta, "hubspot")}</td></tr></table></td></tr>`).join("\n") : "",
 
     registration: data.showRegistration ? `<tr><td style="padding:16px 40px;"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td style="background:${accent.primary};border-radius:4px;padding:24px;text-align:center;"><p style="margin:0 0 12px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:18px;color:#fff;font-weight:bold;">${resolve(data.registrationMessage)}</p>${data.registrationLink ? `<a href="${data.registrationLink}" style="display:inline-block;background:${accent.cta};color:#fff;text-decoration:none;padding:12px 32px;border-radius:4px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:14px;font-weight:bold;">${data.registrationButtonText || "Register Now"}</a>` : ""}</td></tr></table></td></tr>` : "",
   };
@@ -446,7 +469,7 @@ function generateOutlookHTML(data) {
     }
     if (id === "custom" && data.customBlocks.length > 0) {
       data.customBlocks.forEach(b => {
-        parts.push(`<div style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};padding:14px 18px;margin:0 0 12px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${formatBlockContent(resolve(b.content))}</p></div>`);
+        parts.push(`<div style="background:${BSA.lightTan};border-left:4px solid ${blockBorders[b.style] || blockBorders.info};padding:14px 18px;margin:0 0 12px;">${b.title ? `<p style="margin:0 0 6px;font-family:'Trebuchet MS',Arial,sans-serif;font-size:15px;font-weight:bold;color:${BSA.darkGray};">${b.title}</p>` : ""}<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;color:${BSA.warmGray};line-height:1.6;">${formatBlockContent(resolve(b.content))}</p>${renderBlockButtons(b.buttons, accent.cta, "outlook")}</div>`);
       });
     }
     if (id === "registration" && data.showRegistration) {
@@ -608,7 +631,7 @@ function PreEventEmailBuilder() {
             isFirst={i === 0} isLast={i === data.customBlocks.length - 1}
           />
         ))}
-        <Btn variant="ghost" onClick={() => update("customBlocks", [...data.customBlocks, { title: "", content: "", style: "info" }])} style={{ width: "100%" }}>+ Add Content Block</Btn>
+        <Btn variant="ghost" onClick={() => update("customBlocks", [...data.customBlocks, { title: "", content: "", style: "info", buttons: [] }])} style={{ width: "100%" }}>+ Add Content Block</Btn>
       </Card>
     ),
     registration: (
